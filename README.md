@@ -1,4 +1,4 @@
-#CalHacks 2025 Submission
+# CalHacks 2025 Submission
 
 # CivicGrid
 
