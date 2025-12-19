@@ -1,3 +1,5 @@
+#CalHacks 2025 Submission
+
 # CivicGrid
 
 CivicGrid is an end-to-end pipeline for turning resident reports into actionable work orders. It collects issues via a voice-driven intake, transcribes calls, enriches them with a Claude-powered analyzer (including optional photo context), and surfaces structured issues to the web dashboard so they can be routed to contractors or internal crews.
