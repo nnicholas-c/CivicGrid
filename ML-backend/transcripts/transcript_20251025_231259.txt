@@ -1,0 +1,62 @@
+=== Conversation Transcript ===
+Session Started: 2025-10-25 23:12:59
+
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "There's a pothole in the street."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Your mom's garage."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Six six seven six seven, uh, Street Avenue."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "University."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Six seven six seven six seven."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "North California."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Can you, like, hang up the call? Like, I'll be anywhere, bro."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Give me agent."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Hello?"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "That's crazy."
+}
+
+Session Ended: 2025-10-25 23:15:06
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Yo. It tries to hand me off to a human agent."
+}
+
+Session Ended: 2025-10-25 23:15:11

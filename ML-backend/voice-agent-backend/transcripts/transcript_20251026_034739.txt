@@ -1,0 +1,90 @@
+=== Conversation Transcript ===
+Session Started: 2025-10-26 03:47:39
+
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "The pot only myself."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "There's a pothole in my wall."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Uh, it's a public park"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "pop."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Move the park."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "At Yosemite National Park."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "I mean, it's actually in Berkeley."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Mouthful."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "For me?"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "P o t m o"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "m"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "p a r k"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "yes"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Yes. It's, uh, twenty three zero six Pounds Bridges Drive."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "No."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Three zero six Palos Verdes Drive."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Yes."
+}
+
+Session Ended: 2025-10-26 03:50:08

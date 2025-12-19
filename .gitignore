@@ -1,0 +1,46 @@
+# Global ignores for CivicGrid monorepo
+
+# Environment and secrets
+.env
+.env.*
+**/.env
+**/.env.*
+.envrc
+.secrets/
+*.key
+*.pem
+*.p12
+.service-pids
+
+# Dependency directories
+node_modules/
+**/node_modules/
+venv/
+**/venv/
+.venv/
+**/.venv/
+
+# Build outputs
+build/
+dist/
+coverage/
+*.pyc
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+
+# Logs and runtime files
+*.log
+logs/
+*.pid
+voice-agent.log
+claude-analyzer.log
+frontend.log
+
+# OS/editor clutter
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,37 @@
+=== Conversation Transcript ===
+Session Started: 2025-10-26 03:42:32
+
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Uh, there's, like, a"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "pothole in the city."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Eight six nine five"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Wilson Street."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Hello?"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "It's nine two zero two seven Berkeley, California."
+}
+
+Session Ended: 2025-10-26 03:43:52
+
+Session Ended: 2025-10-26 03:44:20

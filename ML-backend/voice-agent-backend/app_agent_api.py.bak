@@ -1,0 +1,545 @@
+from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
+from array import array
+from flask_socketio import SocketIO
+from deepgram import (
+    DeepgramClient,
+    DeepgramClientOptions,
+    LiveTranscriptionEvents,
+    LiveOptions,
+)
+import os
+import json
+import signal
+import sys
+import subprocess
+from datetime import datetime
+from pathlib import Path
+from dotenv import load_dotenv
+import requests
+
+# Load environment variables from .env file
+load_dotenv()
+
+CLOUD_FUNCTION_URL = "https://us-central1-calhack2025.cloudfunctions.net/addUserUpload"
+
+app = Flask(__name__)
+# Enable CORS for React frontend
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:5173", "http://localhost:5174", "https://localhost:5173", "https://localhost:5174"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
+socketio = SocketIO(app, 
+                    cors_allowed_origins=["http://localhost:5173", "http://localhost:5174", "https://localhost:5173", "https://localhost:5174", "*"], 
+                    path='/socket.io')
+
+# Transcript management
+class TranscriptManager:
+    def __init__(self):
+        self.transcript_lines = []
+        self.current_session_id = None
+        self.picture_data = None
+    
+    def start_session(self):
+        """Start a new transcript session"""
+        self.current_session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.transcript_lines = []
+        self.picture_data = None
+        self.transcript_lines.append(f"=== Conversation Transcript ===")
+        self.transcript_lines.append(f"Session Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        self.transcript_lines.append("")
+        return self.current_session_id
+    
+    def add_user_message(self, message):
+        """Add user message to transcript"""
+        if message.strip():
+            self.transcript_lines.append(f"[User] {message}")
+    
+    def add_agent_message(self, message):
+        """Add agent message to transcript"""
+        if message.strip():
+            self.transcript_lines.append(f"[Agent] {message}")
+    
+    def add_thinking(self, thinking_text):
+        """Add agent thinking to transcript"""
+        if thinking_text.strip():
+            self.transcript_lines.append(f"[Agent Thinking] {thinking_text}")
+    
+    def save_transcript(self):
+        """Save transcript to file"""
+        if not self.current_session_id:
+            return None
+        
+        filename = f"transcripts/transcript_{self.current_session_id}.txt"
+        os.makedirs("transcripts", exist_ok=True)
+        
+        self.transcript_lines.append("")
+        self.transcript_lines.append(f"Session Ended: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        with open(filename, 'w') as f:
+            f.write('\n'.join(self.transcript_lines))
+
+        self.send_transcript_to_cloud()
+
+        return filename
+    
+    def get_transcript_text(self):
+        """Get current transcript as string"""
+        return '\n'.join(self.transcript_lines)
+
+    def set_picture(self, picture_base64: str | None):
+        """Store the uploaded picture data for later upload"""
+        self.picture_data = picture_base64
+
+    def send_transcript_to_cloud(self):
+        """Send the current transcript to the Cloud Function"""
+        if not self.transcript_lines:
+            return None
+
+        payload = {
+            "transcript": self.get_transcript_text(),
+            "picture": self.picture_data or ""
+        }
+
+        try:
+            response = requests.post(CLOUD_FUNCTION_URL, json=payload, timeout=10)
+            response.raise_for_status()
+            print(f"Transcript uploaded successfully: {response.text}")
+            return response
+        except requests.RequestException as exc:
+            print(f"Failed to upload transcript: {exc}")
+            return None
+
+transcript_manager = TranscriptManager()
+
+# Function to trigger Claude Analyzer
+def trigger_claude_analyzer():
+    """Trigger the Claude-Analyzer to process the uploaded transcript"""
+    try:
+        analyzer_path = Path(__file__).parent.parent / "Claude-Anaylzer" / "process_uploads.py"
+        if analyzer_path.exists():
+            print("\n=== Triggering Claude-Analyzer ===")
+            result = subprocess.Popen(
+                [sys.executable, str(analyzer_path)],
+                cwd=str(analyzer_path.parent),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            print(f"✓ Claude-Analyzer started (PID: {result.pid})")
+            return result
+        else:
+            print(f"Warning: Claude-Analyzer not found at {analyzer_path}")
+            return None
+    except Exception as e:
+        print(f"Error triggering Claude-Analyzer: {e}")
+        return None
+
+# Signal handler to save transcript on exit
+def signal_handler(sig, frame):
+    """Handle SIGINT (Ctrl+C) and SIGTERM to save transcript before exit"""
+    print("\n\n=== Saving transcript before shutdown ===")
+    transcript_file = transcript_manager.save_transcript()
+    if transcript_file:
+        print(f"✓ Transcript saved to {transcript_file}")
+        # Trigger Claude-Analyzer
+        trigger_claude_analyzer()
+    print("Shutting down gracefully...")
+    sys.exit(0)
+
+# Register signal handlers
+signal.signal(signal.SIGINT, signal_handler)   # Ctrl+C
+signal.signal(signal.SIGTERM, signal_handler)  # Termination signal
+
+# Initialize Deepgram client
+config = DeepgramClientOptions(
+    options={
+        "keepalive": "true",
+        "microphone_record": "true",
+        "speaker_playback": "true",
+    }
+)
+
+deepgram = DeepgramClient(os.getenv("DEEPGRAM_API_KEY", ""), config)
+dg_connection = None  # Will be created per connection
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/transcript')
+def get_transcript():
+    """Return the current transcript as JSON"""
+    return {
+        'transcript': transcript_manager.get_transcript_text(),
+        'session_id': transcript_manager.current_session_id
+    }
+
+@app.route('/upload_picture', methods=['POST'])
+def upload_picture():
+    data = request.get_json(silent=True) or {}
+    picture = data.get('picture')
+
+    if picture is None:
+        return jsonify({'error': 'picture field is required'}), 400
+
+    transcript_manager.set_picture(picture)
+    return jsonify({'status': 'ok'})
+
+@socketio.on('connect')
+def handle_connect():
+    global dg_connection
+    
+    # Create a fresh Deepgram connection for this session
+    dg_connection = deepgram.agent.websocket.v("1")
+    
+    # Start a new transcript session
+    session_id = transcript_manager.start_session()
+    print(f"New session started: {session_id}")
+    socketio.emit('session_started', {'session_id': session_id})
+    
+    options = SettingsOptions()
+
+    # Configure audio input settings
+    options.audio.input = Input(
+        encoding="linear16",
+        sample_rate=16000  # Match the output sample rate
+    )
+
+    # Configure audio output settings
+    options.audio.output = Output(
+        encoding="linear16",
+        sample_rate=16000,
+        container="none"
+    )
+
+    # LLM provider configuration
+    options.agent.think.provider.type = "google"
+    options.agent.think.provider.model = "gemini-2.5-flash"
+    
+    # Load system prompt from file
+    prompt_path = Path(__file__).parent / 'agent_prompt.txt'
+    with open(prompt_path, 'r') as f:
+        options.agent.think.prompt = f.read()
+
+    # Deepgram provider configuration
+    options.agent.listen.provider.keyterms = ["hello", "goodbye"]
+    options.agent.listen.provider.model = "nova-3"
+    options.agent.listen.provider.type = "deepgram"
+    options.agent.speak.provider.type = "deepgram"
+    options.agent.speak.provider.model = "aura-2-odysseus-en"
+    
+    # Enable barge-in (user can interrupt agent)
+    options.agent.listen.model = "nova-3"
+    
+    # Configure turn detection for interruption
+    # Set endpointing to detect when user starts speaking
+    options.agent.listen.provider.endpointing = 300  # 300ms of speech to detect user turn
+    
+    # Enable interim results for faster barge-in detection
+    options.agent.listen.provider.interim_results = True
+
+    # Sets Agent greeting
+    options.agent.greeting = "Hey there! This is the AI service agent. What problem or issue can I help report for you today?"
+
+    # Event handlers
+    def on_open(self, open, **kwargs):
+        print("Open event received:", open.__dict__)
+        socketio.emit('open', {'data': open.__dict__})
+
+    def on_welcome(self, welcome, **kwargs):
+        print("Welcome event received:", welcome.__dict__)
+        socketio.emit('welcome', {'data': welcome.__dict__})
+
+    def on_history(self, history, **kwargs):
+        """Handle History messages with audio"""
+        print(f"History event received: {history.__dict__ if hasattr(history, '__dict__') else history}")
+        print(f"History attributes: {dir(history)}")
+        
+        # Try to extract audio from history
+        try:
+            if hasattr(history, 'audio') and history.audio:
+                print(f"Audio data found in history: {len(history.audio)} bytes")
+                # Send audio to client
+                socketio.emit('agent_audio', {
+                    'audio': list(history.audio) if isinstance(history.audio, bytes) else history.audio,
+                    'format': 'pcm16'
+                })
+            else:
+                print(f"No audio in History event")
+        except Exception as e:
+            print(f"Error extracting audio from history: {e}")
+    
+    def on_message(self, message, **kwargs):
+        """Handle generic messages including History with audio"""
+        print(f"Unknown Message: response_type: {getattr(message, 'type', 'unknown')}, data: {message.__dict__ if hasattr(message, '__dict__') else message}")
+        
+        # Try to extract audio from message
+        try:
+            if hasattr(message, 'audio') and message.audio:
+                print(f"Audio data found in message: {len(message.audio)} bytes")
+                # Send audio to client
+                socketio.emit('agent_audio', {
+                    'audio': list(message.audio) if isinstance(message.audio, bytes) else message.audio,
+                    'format': 'pcm16'
+                })
+            elif hasattr(message, 'data') and isinstance(message.data, dict) and message.data.get('audio'):
+                print(f"Audio data found in message.data: {len(message.data['audio'])} bytes")
+                socketio.emit('agent_audio', {
+                    'audio': message.data['audio'],
+                    'format': 'pcm16'
+                })
+        except Exception as e:
+            print(f"Error extracting audio: {e}")
+
+    def on_conversation_text(self, conversation_text, **kwargs):
+        print("Conversation event received:", conversation_text.__dict__)
+        
+        # Extract message and role
+        message = conversation_text.text if hasattr(conversation_text, 'text') else str(conversation_text)
+        role = conversation_text.role if hasattr(conversation_text, 'role') else 'unknown'
+        
+        # Add to transcript
+        if role == 'user':
+            transcript_manager.add_user_message(message)
+        elif role == 'agent':
+            transcript_manager.add_agent_message(message)
+        
+        # Emit to client with transcript update
+        socketio.emit('conversation', {
+            'data': conversation_text.__dict__,
+            'transcript': transcript_manager.get_transcript_text()
+        })
+
+    def on_agent_thinking(self, agent_thinking, **kwargs):
+        print("Thinking event received:", agent_thinking.__dict__)
+        
+        # Extract thinking text
+        thinking_text = agent_thinking.text if hasattr(agent_thinking, 'text') else str(agent_thinking)
+        
+        # Add to transcript
+        transcript_manager.add_thinking(thinking_text)
+        
+        # Emit to client with transcript update
+        socketio.emit('thinking', {
+            'data': agent_thinking.__dict__,
+            'transcript': transcript_manager.get_transcript_text()
+        })
+
+    def on_function_call_request(self, function_call_request: FunctionCallRequest, **kwargs):
+        print("Function call event received:", function_call_request.__dict__)
+        response = FunctionCallResponse(
+            function_call_id=function_call_request.function_call_id,
+            output="Function response here"
+        )
+        dg_connection.send_function_call_response(response)
+        socketio.emit('function_call', {'data': function_call_request.__dict__})
+
+    def on_agent_started_speaking(self, agent_started_speaking, **kwargs):
+        print("Agent speaking event received:", agent_started_speaking.__dict__)
+        socketio.emit('agent_speaking', {'data': agent_started_speaking.__dict__})
+
+    def on_error(self, error, **kwargs):
+        print("Error event received:", error.__dict__)
+        error_data = {
+            'message': str(error),
+            'type': error.__class__.__name__,
+            'details': error.__dict__
+        }
+        print("Sending error to client:", error_data)
+        socketio.emit('error', {'data': error_data})
+
+    def on_agent_stopped_speaking(self, agent_stopped_speaking, **kwargs):
+        print("Agent stopped speaking event received:", agent_stopped_speaking.__dict__)
+        socketio.emit('agent_stopped_speaking', {'data': agent_stopped_speaking.__dict__})
+
+    def on_audio(self, audio, **kwargs):
+        """Handle audio output from agent"""
+        print(f"Audio event received, type: {type(audio)}, size: {len(audio) if hasattr(audio, '__len__') else 'unknown'}")
+        print(f"Audio object: {audio.__dict__ if hasattr(audio, '__dict__') else audio[:100] if hasattr(audio, '__len__') else audio}")
+        if audio:
+            # Check if it's raw bytes/array or an object with audio property
+            audio_data = None
+            if isinstance(audio, (bytes, bytearray)):
+                audio_data = list(audio)
+            elif hasattr(audio, 'audio'):
+                audio_data = list(audio.audio) if isinstance(audio.audio, (bytes, bytearray)) else audio.audio
+            elif isinstance(audio, list):
+                audio_data = audio
+            
+            if audio_data:
+                print(f"Sending {len(audio_data)} audio samples to client")
+                socketio.emit('agent_audio', {
+                    'audio': audio_data,
+                    'format': 'pcm16'
+                })
+            else:
+                print("Could not extract audio data from audio event")
+
+    def on_user_started_speaking(self, user_started_speaking, **kwargs):
+        print("🎤 User started speaking event received:", user_started_speaking.__dict__)
+        socketio.emit('user_started_speaking', {'data': user_started_speaking.__dict__})
+
+    def on_user_stopped_speaking(self, user_stopped_speaking, **kwargs):
+        print("🎤 User stopped speaking event received:", user_stopped_speaking.__dict__)
+        socketio.emit('user_stopped_speaking', {'data': user_stopped_speaking.__dict__})
+
+    # Register event handlers
+    dg_connection.on(AgentWebSocketEvents.Open, on_open)
+    dg_connection.on(AgentWebSocketEvents.Welcome, on_welcome)
+    dg_connection.on(AgentWebSocketEvents.ConversationText, on_conversation_text)
+    dg_connection.on(AgentWebSocketEvents.AgentThinking, on_agent_thinking)
+    dg_connection.on(AgentWebSocketEvents.FunctionCallRequest, on_function_call_request)
+    dg_connection.on(AgentWebSocketEvents.AgentStartedSpeaking, on_agent_started_speaking)
+    dg_connection.on(AgentWebSocketEvents.Error, on_error)
+    
+    # Register additional handlers if they exist in the SDK
+    try:
+        dg_connection.on(AgentWebSocketEvents.AgentStoppedSpeaking, on_agent_stopped_speaking)
+    except:
+        pass
+    try:
+        dg_connection.on(AgentWebSocketEvents.UserStartedSpeaking, on_user_started_speaking)
+    except:
+        pass
+    try:
+        dg_connection.on(AgentWebSocketEvents.UserStoppedSpeaking, on_user_stopped_speaking)
+    except:
+        pass
+    
+    # Try to register History event if it exists
+    try:
+        dg_connection.on(AgentWebSocketEvents.History, on_history)
+    except:
+        pass
+    
+    # Generic handler for any other messages
+    dg_connection.on("message", on_message)
+    dg_connection.on("audio", on_audio)
+
+    print("Starting Deepgram connection...")
+    if not dg_connection.start(options):
+        print("Failed to start Deepgram connection")
+        socketio.emit('error', {'data': {'message': 'Failed to start connection'}})
+        return
+    print("Deepgram connection started successfully")
+
+audio_chunk_counter = 0
+first_audio_logged = False
+
+@socketio.on('audio_data')
+def handle_audio_data(data):
+    global dg_connection, audio_chunk_counter, first_audio_logged
+    try:
+        if not dg_connection:
+            print("Warning: No Deepgram connection available")
+            socketio.emit('error', {'data': {'message': 'No Deepgram connection available'}})
+            return
+            
+        # Handle different data formats from SocketIO
+        audio_bytes = None
+        samples = None
+        
+        if isinstance(data, bytes):
+            # Already in bytes format
+            audio_bytes = data
+            samples = array('h', data)
+        elif isinstance(data, (list, tuple)):
+            # Convert list/array to bytes
+            try:
+                audio_array = array('h', data)
+                audio_bytes = audio_array.tobytes()
+                samples = data
+            except (ValueError, OverflowError) as e:
+                print(f"Error converting audio array to bytes: {e}")
+                return
+        elif isinstance(data, dict):
+            # SocketIO might wrap data in a dict
+            if 'audio' in data:
+                audio_data = data['audio']
+                if isinstance(audio_data, (list, tuple)):
+                    audio_array = array('h', audio_data)
+                    audio_bytes = audio_array.tobytes()
+                    samples = audio_data
+                elif isinstance(audio_data, bytes):
+                    audio_bytes = audio_data
+                    samples = array('h', audio_data)
+        else:
+            print(f"Unexpected audio data type: {type(data)}")
+            return
+            
+        # Send to Deepgram
+        if audio_bytes and len(audio_bytes) > 0:
+            dg_connection.send(audio_bytes)
+            audio_chunk_counter += 1
+            
+            # Log first chunk with audio level analysis
+            if not first_audio_logged:
+                # Calculate RMS volume
+                if samples:
+                    sum_squares = sum(s*s for s in samples[:100])  # Check first 100 samples
+                    rms = (sum_squares / min(len(samples), 100)) ** 0.5
+                    db = 20 * __import__('math').log10(rms / 32768.0) if rms > 0 else -96
+                    print(f"🎙️  First audio chunk: {len(audio_bytes)} bytes, RMS level: {rms:.0f}, ~{db:.1f}dB")
+                    if rms < 100:
+                        print(f"⚠️  WARNING: Audio level very low (RMS={rms:.0f}). Speak louder or check mic gain!")
+                else:
+                    print(f"🎙️  First audio chunk received: {len(audio_bytes)} bytes, type: {type(data).__name__}")
+                first_audio_logged = True
+            
+            # Log every 100th chunk to confirm data flow and check audio level
+            if audio_chunk_counter % 100 == 0:
+                if samples:
+                    sum_squares = sum(s*s for s in samples[:100])
+                    rms = (sum_squares / min(len(samples), 100)) ** 0.5
+                    print(f"✓ Sent {audio_chunk_counter} chunks | RMS: {rms:.0f} | {len(audio_bytes)} bytes")
+                else:
+                    print(f"✓ Sent {audio_chunk_counter} audio chunks to Deepgram ({len(audio_bytes)} bytes each)")
+        else:
+            print("Warning: Empty audio data received")
+            
+    except Exception as e:
+        print(f"Error handling audio data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        socketio.emit('error', {'data': {'message': f'Error handling audio data: {str(e)}'}})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    global dg_connection, audio_chunk_counter, first_audio_logged
+    
+    # Save transcript before closing connection (includes picture if uploaded)
+    transcript_file = transcript_manager.save_transcript()
+    if transcript_file:
+        print(f"Transcript saved to {transcript_file}")
+        # Trigger Claude-Analyzer
+        trigger_claude_analyzer()
+    
+    # Close Deepgram connection if it exists
+    if dg_connection is not None:
+        try:
+            dg_connection.finish()
+        except Exception as e:
+            print(f"Error closing Deepgram connection: {e}")
+        dg_connection = None
+    
+    # Reset counters for next session
+    audio_chunk_counter = 0
+    first_audio_logged = False
+
+if __name__ == '__main__':
+    # Run with use_reloader=False to allow our signal handler to work properly
+    # Enable HTTPS for microphone access on LAN devices
+    import ssl
+    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    
+    # Use paths relative to this script's directory
+    script_dir = Path(__file__).parent
+    cert_path = script_dir / 'cert.pem'
+    key_path = script_dir / 'key.pem'
+    
+    ssl_context.load_cert_chain(str(cert_path), str(key_path))
+    
+    socketio.run(app, debug=True, port=3000, host='0.0.0.0', use_reloader=False, ssl_context=ssl_context)

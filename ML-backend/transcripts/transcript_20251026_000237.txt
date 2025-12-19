@@ -1,0 +1,71 @@
+=== Conversation Transcript ===
+Session Started: 2025-10-26 00:02:37
+
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Hello"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "are you doing?"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Well, what kind of service requests are available? Like, what can I do? Like, what what what possible options do I have?"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Arjun, can I, uh, like,"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Argent?"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "What what I wanna do is um, can you tell me, like, a long story, please?"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "I don't think the barge works. No."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Alright. So yeah. I mean, thank you. I I like your voice."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Alright. That's cool. I I that we're gonna add margin."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Yeah."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "It's like when the user started, like, speaking right in the middle of the TTS alpha."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Yeah. To flush everything, cut it off, and then"
+}
+
+Session Ended: 2025-10-26 00:15:45
+
+Session Ended: 2025-10-26 00:15:45
+
+Session Ended: 2025-10-26 00:15:45
+
+Session Ended: 2025-10-26 00:15:46

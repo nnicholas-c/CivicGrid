@@ -1,0 +1,188 @@
+/* CivicGrid - Glassmorphism & Vibrant Theme */
+@import "tailwindcss";
+
+* {
+  border-color: rgb(229 231 235);
+}
+
+body {
+  background: transparent;
+  color: rgb(17 24 39);
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.dark body {
+  background: linear-gradient(to bottom right, rgb(17 24 39), rgb(30 58 138), rgb(49 46 129));
+  color: rgb(243 244 246);
+}
+
+/* Glassmorphism card effect - Reduced blur for better clarity */
+.glass {
+  backdrop-filter: blur(8px) saturate(150%);
+  background-color: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+.dark .glass {
+  background-color: rgba(17, 24, 39, 0.35);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.glass-strong {
+  backdrop-filter: blur(12px) saturate(150%);
+  background-color: rgba(255, 255, 255, 0.40);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.25);
+}
+
+.dark .glass-strong {
+  background-color: rgba(17, 24, 39, 0.50);
+  border-color: rgba(255, 255, 255, 0.30);
+}
+
+/* Golden Gate Bridge Theme - Modern Orange/Red Gradients */
+.gradient-primary {
+  background: linear-gradient(135deg, rgb(234, 88, 12), rgb(249, 115, 22), rgb(251, 146, 60));
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, rgb(16, 185, 129), rgb(5, 150, 105));
+}
+
+.gradient-warning {
+  background: linear-gradient(135deg, rgb(245, 158, 11), rgb(217, 119, 6));
+}
+
+.gradient-danger {
+  background: linear-gradient(135deg, rgb(220, 38, 38), rgb(185, 28, 28));
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, rgb(14, 165, 233), rgb(2, 132, 199));
+}
+
+/* Animated gradient text - Golden Gate theme */
+.gradient-text {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(135deg, rgb(234, 88, 12), rgb(249, 115, 22), rgb(251, 146, 60));
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Glow effects - Updated for Golden Gate theme */
+.glow-orange {
+  box-shadow: 0 10px 20px -3px rgba(249, 115, 22, 0.6);
+}
+
+.glow-accent {
+  box-shadow: 0 10px 20px -3px rgba(14, 165, 233, 0.5);
+}
+
+.glow-green {
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.5);
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: scale(1.05) translateY(-4px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Focus ring custom */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+}
+
+/* High contrast text for immersive backgrounds - using brighter colors instead of shadows */
+.text-high-contrast {
+  color: rgb(255, 255, 255);
+  font-weight: 700;
+}
+
+.text-high-contrast-strong {
+  color: rgb(255, 255, 255);
+  font-weight: 800;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(209, 213, 219, 0.5);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(55, 65, 81, 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(75, 85, 99, 0.7);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Radial gradient for vignette effects */
+.bg-gradient-radial {
+  background-image: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
+/* Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

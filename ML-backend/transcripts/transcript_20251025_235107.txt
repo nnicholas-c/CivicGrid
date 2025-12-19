@@ -1,0 +1,51 @@
+=== Conversation Transcript ===
+Session Started: 2025-10-25 23:51:07
+
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "This is John Paul in the street."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "This is John Paul with you."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Street."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "This"
+}
+
+Session Ended: 2025-10-25 23:51:21
+
+Session Ended: 2025-10-25 23:51:22
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "It's"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Thanks."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Okay."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": ""
+}
+
+Session Ended: 2025-10-25 23:51:45
+
+Session Ended: 2025-10-25 23:51:45

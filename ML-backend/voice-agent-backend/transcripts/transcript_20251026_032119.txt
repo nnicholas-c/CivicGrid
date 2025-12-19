@@ -1,0 +1,12 @@
+=== Conversation Transcript ===
+Session Started: 2025-10-26 03:21:19
+
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Hello?"
+}
+
+Session Ended: 2025-10-26 03:21:47
+
+Session Ended: 2025-10-26 03:21:53

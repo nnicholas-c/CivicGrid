@@ -1,0 +1,197 @@
+=== Conversation Transcript ===
+Session Started: 2025-10-26 00:49:58
+
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "You hear it?"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Hello"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "I hear"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Just a just a pothole or something."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "It's a noun."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "One zero one Highway."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Oh, no. I need address."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "What's in the one zero one highway that I find of?"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "It's good. It's good."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "L a"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Okay."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": ""
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Say it. What is the say me? To some person saying, just bullshit it."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Accent twenty three"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "b. Okay."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Yes."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Yes."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Six seven six six seven seven nine six nine. Okay."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Yes."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Black."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Yes."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Like So the actual"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "it's an actual thing."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Like What's the blockchain word, bro?"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "The back end is, like, fucking harder. Oh, it's spooky. It's spooky. Picking up off the"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "over here. I know what what is it gonna say over here."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Let's see."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "What's"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "the black"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "part."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Black paper book."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Oh."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Just looking back, is the problem causing any immediate issue?"
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Large."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "It's large, big, and I'm dying."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Yes. Yes. My my heart fell into that."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "Oh, that's it."
+}
+[User] {
+    "type": "ConversationText",
+    "role": "user",
+    "content": "I can go ask you something. No. She she we did the alteration and watching her."
+}
+
+Session Ended: 2025-10-26 00:55:11
+
+Session Ended: 2025-10-26 00:55:12
