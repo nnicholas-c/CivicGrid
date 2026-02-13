@@ -1,6 +1,5 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-from array import array
 from flask_socketio import SocketIO
 from deepgram import (
     DeepgramClient,
@@ -13,7 +12,6 @@ from deepgram import (
     Output,
 )
 import os
-import json
 import signal
 import sys
 import subprocess
@@ -207,7 +205,7 @@ print(f"✅ Agent prompt loaded ({len(AGENT_PROMPT)} chars)")
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return jsonify({"service": "CivicGrid Voice Agent", "status": "running"})
 
 @app.route('/health')
 def health():
@@ -266,16 +264,16 @@ def handle_connect():
     # Use pre-loaded prompt (cached at startup)
     options.agent.think.prompt = AGENT_PROMPT
 
-    # Deepgram STT configuration
-    options.agent.listen.provider.model = "nova-3"
+    # Deepgram STT configuration (nova-2 for faster init)
+    options.agent.listen.provider.model = "nova-2"
     options.agent.listen.provider.type = "deepgram"
     options.agent.listen.provider.endpointing = 300
     options.agent.listen.provider.interim_results = True
     options.agent.listen.provider.keyterms = ["hello", "goodbye"]
     
-    # Deepgram TTS configuration
+    # Deepgram TTS configuration (aura-helios for faster init)
     options.agent.speak.provider.type = "deepgram"
-    options.agent.speak.provider.model = "aura-2-odysseus-en"
+    options.agent.speak.provider.model = "aura-helios-en"
 
     # Sets Agent greeting
     options.agent.greeting = "Hey there! This is the AI service agent. What problem or issue can I help report for you today?"
@@ -494,11 +492,6 @@ def handle_connect():
     
     threading.Thread(target=start_deepgram, daemon=True).start()
 
-audio_chunk_counter = 0
-first_audio_logged = False
-
-# Audio is handled by pyaudio directly on the server
-# No need to stream audio from the browser
 
 def save_and_process_transcript():
     """Helper function to save transcript and trigger processing"""
@@ -517,24 +510,17 @@ def save_and_process_transcript():
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    global dg_connection, audio_chunk_counter, first_audio_logged
+    global dg_connection
     
-    print("\n=== Client disconnected, saving session ===")
-    
-    # Save transcript before closing connection (includes picture if uploaded)
+    print("Client disconnected, saving session")
     save_and_process_transcript()
     
-    # Close Deepgram connection if it exists
     if dg_connection is not None:
         try:
             dg_connection.finish()
         except Exception as e:
             print(f"Warning: Error closing Deepgram connection: {e}")
         dg_connection = None
-    
-    # Reset counters for next session
-    audio_chunk_counter = 0
-    first_audio_logged = False
 
 @socketio.on('end_call')
 def handle_end_call():

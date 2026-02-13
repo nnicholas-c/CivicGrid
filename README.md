@@ -26,7 +26,7 @@ CivicGrid is an end-to-end platform that lets residents report civic issues (pot
 ## ✨ Features
 
 ### 🎙️ Voice-Powered Reporting
-- **Conversational AI agent** powered by Deepgram STT/TTS + Google Gemini 2.5 Flash
+- **Conversational AI agent** powered by Deepgram Nova-2 STT + Aura TTS + Google Gemini 2.5 Flash
 - Natural phone-style conversation to report issues — no forms to fill out
 - Real-time transcript display during calls
 - Photo evidence upload during or after the call
@@ -69,7 +69,8 @@ CivicGrid is an end-to-end platform that lets residents report civic issues (pot
 ┌─────────────────┐     WebSocket      ┌──────────────────────┐
 │   React Frontend│◄──────────────────► │  Voice Agent Backend │
 │   (GitHub Pages)│                     │  (Railway - Flask)   │
-│                 │                     │  Deepgram + Gemini   │
+│                 │                     │  Deepgram Nova-2 STT │
+│                 │                     │  Aura TTS + Gemini   │
 └────────┬────────┘                     └──────────┬───────────┘
          │ REST                                    │ triggers
          ▼                                         ▼
@@ -86,7 +87,7 @@ CivicGrid is an end-to-end platform that lets residents report civic issues (pot
 | Layer | Technology |
 |-------|-----------|
 | **Frontend** | React 19, TypeScript, Vite, Tailwind CSS 4, Framer Motion, Zustand, MapLibre GL |
-| **Voice Agent** | Flask, Flask-SocketIO, Deepgram Agent API, Google Gemini 2.5 Flash |
+| **Voice Agent** | Flask, Flask-SocketIO, Deepgram Agent API (Nova-2 STT, Aura TTS), Google Gemini 2.5 Flash |
 | **AI Analyzer** | Python, xAI Grok API (OpenAI-compatible), Vision + Text |
 | **Backend API** | Google Cloud Functions, Firebase/Firestore |
 | **Hosting** | GitHub Pages (frontend), Railway (ML backend) |
@@ -104,6 +105,7 @@ CivicGrid/
 │   │   ├── services/             # API clients (workItemsApi, voiceAgentApi)
 │   │   ├── store/                # Zustand state management
 │   │   ├── hooks/                # Custom React hooks
+│   │   ├── lib/                  # Utility helpers (assetUrl, backgrounds)
 │   │   └── types/                # TypeScript interfaces
 │   └── public/                   # Static assets
 │
@@ -122,8 +124,7 @@ CivicGrid/
 │   └── transcripts/              # Saved voice transcripts
 │
 ├── .github/workflows/deploy.yml  # GitHub Pages CI/CD
-├── start-all-services.sh         # Local dev launcher
-└── stop-all-services.sh          # Local dev stopper
+└── README.md
 ```
 
 ---
@@ -164,6 +165,7 @@ cd ML-backend/voice-agent-backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+python app.py              # → http://localhost:3000
 ```
 
 3. **Environment Variables**
@@ -179,9 +181,9 @@ XAI_API_KEY=your_key_here
 GROK_MODEL=grok-3-mini-fast    # optional
 ```
 
-4. **Run Everything**
+4. **Quick Start** (optional convenience scripts)
 ```bash
-./start-all-services.sh    # Starts frontend, voice agent, and analyzer
+./start-all-services.sh    # Launches frontend + voice agent
 ./stop-all-services.sh     # Stops all services
 ```
 
