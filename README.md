@@ -8,11 +8,7 @@ CivicGrid is an end-to-end platform that lets residents report civic issues (pot
 
 ## 🌐 Live Demo
 
-| Service | URL |
-|---------|-----|
-| **Frontend** | [nnicholas-c.github.io/CivicGrid](https://nnicholas-c.github.io/CivicGrid/) |
-| **ML Backend** | [civicgrid-production.up.railway.app](https://civicgrid-production.up.railway.app) |
-| **Firebase API** | Google Cloud Functions (12 endpoints) |
+**🔗 [nnicholas-c.github.io/CivicGrid](https://nnicholas-c.github.io/CivicGrid/)**
 
 ---
 
