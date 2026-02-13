@@ -28,6 +28,7 @@ export default function VoiceReportIssue() {
   const [isUserSpeaking, setIsUserSpeaking] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [sessionId, setSessionId] = useState('');
+  const [connectingMessage, setConnectingMessage] = useState('Connecting to server...');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -154,11 +155,30 @@ export default function VoiceReportIssue() {
   const startCall = async () => {
     try {
       setCallState('connecting');
+      setConnectingMessage('Connecting to server...');
       setError('');
       setTranscript('');
       
+      // Progress messages while waiting
+      const progressTimer1 = setTimeout(() => setConnectingMessage('Setting up voice agent...'), 3000);
+      const progressTimer2 = setTimeout(() => setConnectingMessage('Initializing AI assistant...'), 6000);
+      const progressTimer3 = setTimeout(() => setConnectingMessage('Almost ready...'), 10000);
+      
+      // Connection timeout (30 seconds)
+      const timeoutTimer = setTimeout(() => {
+        if (callState === 'connecting') {
+          voiceAgentApi.disconnect();
+          setError('Connection timed out. The server may be starting up — please try again in a moment.');
+          setCallState('idle');
+        }
+      }, 30000);
+      
       await voiceAgentApi.connect({
         onConnect: () => {
+          clearTimeout(progressTimer1);
+          clearTimeout(progressTimer2);
+          clearTimeout(progressTimer3);
+          clearTimeout(timeoutTimer);
           setCallState('active');
         },
         onDisconnect: () => {
@@ -538,7 +558,7 @@ export default function VoiceReportIssue() {
                 
                 {callState === 'connecting' && (
                   <p className="text-center text-white/70 text-sm">
-                    Connecting to agent...
+                    {connectingMessage}
                   </p>
                 )}
                 

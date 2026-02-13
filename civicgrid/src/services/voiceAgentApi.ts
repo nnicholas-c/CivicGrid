@@ -66,8 +66,9 @@ class VoiceAgentService {
     console.log('Connecting to Socket.IO at:', this.ML_BACKEND_URL);
     this.socket = io(this.ML_BACKEND_URL, {
       path: '/socket.io',
-      forceNew: true
-      // Let Socket.IO auto-negotiate transport (polling then upgrade to websocket)
+      forceNew: true,
+      transports: ['websocket'],
+      timeout: 20000
     });
 
     this.setupSocketListeners();
