@@ -160,9 +160,9 @@ export default function VoiceReportIssue() {
       setTranscript('');
       
       // Progress messages while waiting
-      const progressTimer1 = setTimeout(() => setConnectingMessage('Setting up voice agent...'), 3000);
-      const progressTimer2 = setTimeout(() => setConnectingMessage('Initializing AI assistant...'), 6000);
-      const progressTimer3 = setTimeout(() => setConnectingMessage('Almost ready...'), 10000);
+      const progressTimer1 = setTimeout(() => setConnectingMessage('Initializing AI models...'), 5000);
+      const progressTimer2 = setTimeout(() => setConnectingMessage('Loading voice recognition...'), 10000);
+      const progressTimer3 = setTimeout(() => setConnectingMessage('Almost ready — hang tight...'), 15000);
       
       // Connection timeout (30 seconds)
       const timeoutTimer = setTimeout(() => {
@@ -175,6 +175,11 @@ export default function VoiceReportIssue() {
       
       await voiceAgentApi.connect({
         onConnect: () => {
+          // Connected to our server, but Deepgram agent isn't ready yet
+          setConnectingMessage('Setting up voice agent...');
+        },
+        onReady: () => {
+          // Deepgram agent is fully initialized — go active
           clearTimeout(progressTimer1);
           clearTimeout(progressTimer2);
           clearTimeout(progressTimer3);

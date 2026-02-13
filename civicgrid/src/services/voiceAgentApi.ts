@@ -8,6 +8,7 @@ import { io, Socket } from 'socket.io-client';
 export interface VoiceAgentEvents {
   onConnect?: () => void;
   onDisconnect?: () => void;
+  onReady?: () => void;
   onSessionStarted?: (data: { session_id: string }) => void;
   onConversation?: (data: { data: any; transcript: string }) => void;
   onThinking?: (data: { data: any; transcript: string }) => void;
@@ -78,10 +79,15 @@ class VoiceAgentService {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      console.log('Connected to voice agent');
+      console.log('Connected to voice agent server');
       this.isConnected = true;
       this.startAudioStreaming();
       this.events.onConnect?.();
+    });
+
+    this.socket.on('deepgram_ready', () => {
+      console.log('Deepgram agent is ready');
+      this.events.onReady?.();
     });
 
     this.socket.on('disconnect', () => {
