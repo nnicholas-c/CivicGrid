@@ -27,17 +27,25 @@ load_dotenv()
 
 CLOUD_FUNCTION_URL = "https://adduserupload-xglsok67aq-uc.a.run.app"
 
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://localhost:5173",
+    "https://localhost:5174",
+    "https://nnicholas-c.github.io",
+]
+
 app = Flask(__name__)
 # Enable CORS for React frontend
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:5173", "http://localhost:5174", "https://localhost:5173", "https://localhost:5174"],
+        "origins": ALLOWED_ORIGINS,
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
 })
 socketio = SocketIO(app, 
-                    cors_allowed_origins=["http://localhost:5173", "http://localhost:5174", "https://localhost:5173", "https://localhost:5174", "*"], 
+                    cors_allowed_origins=ALLOWED_ORIGINS, 
                     path='/socket.io')
 
 # Transcript management
@@ -614,16 +622,5 @@ def handle_end_call():
     socketio.emit('call_ended', {'status': 'success'})
 
 if __name__ == '__main__':
-    # Run with use_reloader=False to allow our signal handler to work properly
-    # Disabled HTTPS for local development to avoid SSL certificate issues
-    # import ssl
-    # ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    # 
-    # # Use paths relative to this script's directory
-    # script_dir = Path(__file__).parent
-    # cert_path = script_dir / 'cert.pem'
-    # key_path = script_dir / 'key.pem'
-    # 
-    # ssl_context.load_cert_chain(str(cert_path), str(key_path))
-    
-    socketio.run(app, debug=True, port=3000, host='0.0.0.0', use_reloader=False, allow_unsafe_werkzeug=True)
+    port = int(os.environ.get('PORT', 3000))
+    socketio.run(app, debug=False, port=port, host='0.0.0.0', use_reloader=False, allow_unsafe_werkzeug=True)

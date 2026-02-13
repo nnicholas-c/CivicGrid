@@ -42,6 +42,7 @@ jobs:
           VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
           VITE_LIVEKIT_URL: ${{ vars.VITE_LIVEKIT_URL }}
           VITE_MAPTILER_KEY: ${{ vars.VITE_MAPTILER_KEY }}
+          VITE_ML_BACKEND_URL: ${{ vars.VITE_ML_BACKEND_URL }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
