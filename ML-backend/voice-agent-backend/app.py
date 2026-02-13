@@ -16,7 +16,7 @@ import signal
 import sys
 import subprocess
 import threading
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 import requests
@@ -203,6 +203,48 @@ with open(_prompt_path, 'r') as _f:
     AGENT_PROMPT = _f.read()
 print(f"✅ Agent prompt loaded ({len(AGENT_PROMPT)} chars)")
 
+
+# --- Rate Limiter ---
+class RateLimiter:
+    """Simple daily call counter to control Deepgram API costs."""
+    
+    def __init__(self, daily_limit: int = 15):
+        self.daily_limit = daily_limit
+        self._today = date.today()
+        self._count = 0
+        self._lock = threading.Lock()
+    
+    def _reset_if_new_day(self):
+        today = date.today()
+        if today != self._today:
+            self._today = today
+            self._count = 0
+    
+    def try_acquire(self) -> bool:
+        """Try to use a call slot. Returns True if allowed."""
+        with self._lock:
+            self._reset_if_new_day()
+            if self._count >= self.daily_limit:
+                return False
+            self._count += 1
+            print(f"📞 Call {self._count}/{self.daily_limit} today")
+            return True
+    
+    def status(self) -> dict:
+        with self._lock:
+            self._reset_if_new_day()
+            return {
+                "used": self._count,
+                "limit": self.daily_limit,
+                "remaining": max(0, self.daily_limit - self._count),
+                "reset_date": str(self._today + timedelta(days=1)),
+            }
+
+
+DAILY_CALL_LIMIT = int(os.environ.get("DAILY_CALL_LIMIT", "15"))
+rate_limiter = RateLimiter(daily_limit=DAILY_CALL_LIMIT)
+print(f"📞 Rate limiter: {DAILY_CALL_LIMIT} calls/day")
+
 @app.route('/')
 def index():
     return jsonify({"service": "CivicGrid Voice Agent", "status": "running"})
@@ -210,6 +252,11 @@ def index():
 @app.route('/health')
 def health():
     return jsonify({"status": "ok"}), 200
+
+@app.route('/rate-limit')
+def get_rate_limit():
+    """Return current rate limit status"""
+    return jsonify(rate_limiter.status()), 200
 
 @app.route('/transcript')
 def get_transcript():
@@ -233,6 +280,16 @@ def upload_picture():
 @socketio.on('connect')
 def handle_connect():
     global dg_connection
+    
+    # Check rate limit before spinning up Deepgram
+    if not rate_limiter.try_acquire():
+        status = rate_limiter.status()
+        print(f"🚫 Rate limit reached ({status['used']}/{status['limit']})")
+        socketio.emit('rate_limited', {
+            'message': f"Daily voice call limit reached ({status['limit']} calls/day). Resets tomorrow.",
+            **status
+        })
+        return False  # reject the connection
     
     # Create a fresh Deepgram connection for this session
     dg_connection = deepgram.agent.websocket.v("1")

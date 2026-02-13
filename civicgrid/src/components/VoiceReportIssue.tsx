@@ -19,6 +19,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import voiceAgentApi from '../services/voiceAgentApi';
+import type { RateLimitStatus } from '../services/voiceAgentApi';
 import workItemsApi from '../services/workItemsApi';
 import { assetUrl } from '../lib/assetUrl';
 
@@ -30,6 +31,7 @@ export default function VoiceReportIssue() {
   const [sessionId, setSessionId] = useState('');
   const [connectingMessage, setConnectingMessage] = useState('Connecting to server...');
   const [error, setError] = useState('');
+  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitStatus | null>(null);
   const [success, setSuccess] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
@@ -53,6 +55,13 @@ export default function VoiceReportIssue() {
         clearInterval(pollingIntervalRef.current);
       }
     };
+  }, []);
+
+  // Fetch rate limit status on mount
+  useEffect(() => {
+    voiceAgentApi.checkRateLimit().then((status) => {
+      if (status) setRateLimitInfo(status);
+    });
   }, []);
 
   const checkProcessingStatus = async (uploadId: string) => {
@@ -154,10 +163,21 @@ export default function VoiceReportIssue() {
 
   const startCall = async () => {
     try {
-      setCallState('connecting');
-      setConnectingMessage('Connecting to server...');
       setError('');
       setTranscript('');
+      
+      // Check rate limit before connecting
+      const rateStatus = await voiceAgentApi.checkRateLimit();
+      if (rateStatus) {
+        setRateLimitInfo(rateStatus);
+        if (rateStatus.remaining <= 0) {
+          setError(`Daily demo limit reached (${rateStatus.limit} calls/day). Resets tomorrow. This is a portfolio demo — voice calls are rate-limited to manage API costs.`);
+          return;
+        }
+      }
+      
+      setCallState('connecting');
+      setConnectingMessage('Connecting to server...');
       
       // Progress messages while waiting
       const progressTimer1 = setTimeout(() => setConnectingMessage('Initializing AI models...'), 5000);
@@ -185,6 +205,16 @@ export default function VoiceReportIssue() {
           clearTimeout(progressTimer3);
           clearTimeout(timeoutTimer);
           setCallState('active');
+        },
+        onRateLimited: (data) => {
+          clearTimeout(progressTimer1);
+          clearTimeout(progressTimer2);
+          clearTimeout(progressTimer3);
+          clearTimeout(timeoutTimer);
+          setRateLimitInfo(data);
+          setError(data.message || `Daily demo limit reached (${data.limit} calls/day). Resets tomorrow.`);
+          setCallState('idle');
+          voiceAgentApi.disconnect();
         },
         onDisconnect: () => {
           setCallState('ended');
@@ -677,6 +707,15 @@ export default function VoiceReportIssue() {
               <AlertCircle className="text-red-500 flex-shrink-0" size={20} />
               <p className="text-sm text-red-400">{error}</p>
             </motion.div>
+          )}
+
+          {/* Rate limit indicator */}
+          {rateLimitInfo && callState === 'idle' && !error && (
+            <div className="mt-4 text-center">
+              <span className="text-xs text-white/50">
+                Demo calls remaining today: {rateLimitInfo.remaining}/{rateLimitInfo.limit}
+              </span>
+            </div>
           )}
         </motion.div>
       </div>

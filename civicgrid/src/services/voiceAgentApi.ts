@@ -5,10 +5,19 @@
 
 import { io, Socket } from 'socket.io-client';
 
+export interface RateLimitStatus {
+  used: number;
+  limit: number;
+  remaining: number;
+  reset_date: string;
+  message?: string;
+}
+
 export interface VoiceAgentEvents {
   onConnect?: () => void;
   onDisconnect?: () => void;
   onReady?: () => void;
+  onRateLimited?: (data: RateLimitStatus) => void;
   onSessionStarted?: (data: { session_id: string }) => void;
   onConversation?: (data: { data: any; transcript: string }) => void;
   onThinking?: (data: { data: any; transcript: string }) => void;
@@ -36,6 +45,20 @@ class VoiceAgentService {
 
   constructor() {
     // Initialize audio context when needed
+  }
+
+  /**
+   * Check rate limit status before attempting to connect.
+   * Returns null if the backend is unreachable.
+   */
+  async checkRateLimit(): Promise<RateLimitStatus | null> {
+    try {
+      const res = await fetch(`${this.ML_BACKEND_URL}/rate-limit`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
   }
 
   private async initAudioContext() {
@@ -90,6 +113,11 @@ class VoiceAgentService {
     this.socket.on('deepgram_ready', () => {
       console.log('Deepgram agent is ready');
       this.events.onReady?.();
+    });
+
+    this.socket.on('rate_limited', (data: RateLimitStatus) => {
+      console.log('Rate limited:', data);
+      this.events.onRateLimited?.(data);
     });
 
     this.socket.on('disconnect', () => {

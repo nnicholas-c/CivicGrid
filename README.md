@@ -10,6 +10,8 @@ CivicGrid is an end-to-end platform that lets residents report civic issues (pot
 
 **🔗 [nnicholas-c.github.io/CivicGrid](https://nnicholas-c.github.io/CivicGrid/)**
 
+> ⚠️ **Demo Note:** Voice calls are rate-limited to **15 calls/day** to manage API costs (Deepgram STT/TTS). The counter resets daily. All other features (dashboard, map, case management) are fully available.
+
 <details>
 <summary>Infrastructure endpoints (for developers)</summary>
 
@@ -175,6 +177,7 @@ Create `.env` files:
 ```bash
 # ML-backend/voice-agent-backend/.env
 DEEPGRAM_API_KEY=your_key_here
+DAILY_CALL_LIMIT=15            # optional, default 15 calls/day
 
 # ML-backend/Claude-Anaylzer/.env
 XAI_API_KEY=your_key_here
