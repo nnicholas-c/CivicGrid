@@ -9,6 +9,7 @@ import { Shield, TrendingUp, AlertCircle, Users, MapPin, Clock } from 'lucide-re
 import { useAuthStore } from '../store/authStore';
 import apiService from '../services/api';
 import type { Case } from '../types';
+import { assetUrl } from '../lib/assetUrl';
 
 export default function OfficialDashboard() {
   const { user } = useAuthStore();
@@ -44,7 +45,7 @@ export default function OfficialDashboard() {
         <div
           className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: `url('/golden-gate-bridge.jpg')`,
+            backgroundImage: `url('${assetUrl('/golden-gate-bridge.jpg')}')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',

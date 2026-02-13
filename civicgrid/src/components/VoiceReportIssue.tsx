@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import voiceAgentApi from '../services/voiceAgentApi';
 import workItemsApi from '../services/workItemsApi';
+import { assetUrl } from '../lib/assetUrl';
 
 export default function VoiceReportIssue() {
   const [callState, setCallState] = useState<'idle' | 'connecting' | 'active' | 'ended'>('idle');
@@ -407,7 +408,7 @@ export default function VoiceReportIssue() {
         <div
           className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: `url('/golden-gate-bridge.jpg')`,
+            backgroundImage: `url('${assetUrl('/golden-gate-bridge.jpg')}')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',

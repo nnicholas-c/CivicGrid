@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { Plus, MapPin, Clock } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import apiService from '../services/api';
+import { assetUrl } from '../lib/assetUrl';
 import type { Case } from '../types';
 
 export default function CivilianDashboard() {
@@ -37,7 +38,7 @@ export default function CivilianDashboard() {
         <div
           className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: `url('/golden-gate-bridge.jpg')`,
+            backgroundImage: `url('${assetUrl('/golden-gate-bridge.jpg')}')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',

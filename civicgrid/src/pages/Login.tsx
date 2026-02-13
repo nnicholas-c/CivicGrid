@@ -8,6 +8,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, UserCircle, Briefcase, Shield } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import type { UserRole } from '../types';
+import { assetUrl } from '../lib/assetUrl';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -58,7 +59,7 @@ export default function Login() {
         <div
           className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: `url('/golden-gate-bridge.jpg')`,
+            backgroundImage: `url('${assetUrl('/golden-gate-bridge.jpg')}')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',

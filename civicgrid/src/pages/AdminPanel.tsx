@@ -14,6 +14,7 @@ import {
   Loader2
 } from 'lucide-react';
 import workItemsApi from '../services/workItemsApi';
+import { assetUrl } from '../lib/assetUrl';
 
 export default function AdminPanel() {
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -50,7 +51,7 @@ export default function AdminPanel() {
         <div
           className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: `url('/golden-gate-bridge.jpg')`,
+            backgroundImage: `url('${assetUrl('/golden-gate-bridge.jpg')}')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',

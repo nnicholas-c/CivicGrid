@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Clock, TrendingUp, AlertCircle } from 'lucide-react';
 import apiService from '../services/api';
 import type { Case } from '../types';
+import { assetUrl } from '../lib/assetUrl';
 
 export default function PublicCaseList() {
   const [cases, setCases] = useState<Case[]>([]);
@@ -63,7 +64,7 @@ export default function PublicCaseList() {
         <div
           className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: `url('/golden-gate-bridge.jpg')`,
+            backgroundImage: `url('${assetUrl('/golden-gate-bridge.jpg')}')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',

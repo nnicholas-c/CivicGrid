@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import workItemsApi from '../services/workItemsApi';
 import type { WorkItem } from '../services/workItemsApi';
+import { assetUrl } from '../lib/assetUrl';
 
 type TabType = 'pending_approval' | 'completed_review' | 'all_items';
 
@@ -258,7 +259,7 @@ export default function GovernmentDashboard() {
         <div
           className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: `url('/golden-gate-bridge.jpg')`,
+            backgroundImage: `url('${assetUrl('/golden-gate-bridge.jpg')}')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import workItemsApi from '../services/workItemsApi';
 import type { WorkItem } from '../services/workItemsApi';
+import { assetUrl } from '../lib/assetUrl';
 
 export default function ContractorWorkItems() {
   const [workItems, setWorkItems] = useState<WorkItem[]>([]);
@@ -143,7 +144,7 @@ export default function ContractorWorkItems() {
         <div
           className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: `url('/golden-gate-bridge.jpg')`,
+            backgroundImage: `url('${assetUrl('/golden-gate-bridge.jpg')}')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',

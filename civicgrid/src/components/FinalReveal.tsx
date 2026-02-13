@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { useFinalTimeline } from '../hooks/useFinalTimeline';
 import { useUIStore } from '../store/ui';
 import BackgroundRotator from './BackgroundRotator';
+import { assetUrl } from '../lib/assetUrl';
 
 interface FinalRevealProps {
   bgSrc?: string;
@@ -22,7 +23,7 @@ interface FinalRevealProps {
 }
 
 export default function FinalReveal({
-  bgSrc = '/nyc.jpg',
+  bgSrc = assetUrl('/nyc.jpg'),
   title = 'Ready to Fix Your City?',
   showCTAs = true,
 }: FinalRevealProps) {

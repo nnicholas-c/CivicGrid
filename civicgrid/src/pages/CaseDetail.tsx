@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { assetUrl } from '../lib/assetUrl';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, User, DollarSign, ArrowLeft, ExternalLink } from 'lucide-react';
@@ -63,7 +64,7 @@ export default function CaseDetail() {
         <div
           className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: `url('/golden-gate-bridge.jpg')`,
+            backgroundImage: `url('${assetUrl('/golden-gate-bridge.jpg')}')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',

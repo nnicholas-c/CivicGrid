@@ -4,9 +4,11 @@
  * No randomness, no localStorage persistence
  */
 
+import { assetUrl } from './assetUrl';
+
 export const BG_SEQUENCE = [
-  { id: 'GGB', src: '/golden-gate-bridge.jpg' },
-  { id: 'NYC', src: '/nyc.jpg' },
+  { id: 'GGB', src: assetUrl('/golden-gate-bridge.jpg') },
+  { id: 'NYC', src: assetUrl('/nyc.jpg') },
 ] as const;
 
 export type BgId = (typeof BG_SEQUENCE)[number]['id'];
