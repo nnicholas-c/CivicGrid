@@ -244,8 +244,9 @@ export default function VoiceReportIssue() {
           setError(data.data.message);
         }
       });
-    } catch (err: any) {
-      setError(err.message || 'Failed to start call');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to start call';
+      setError(message);
       setCallState('idle');
     }
   };
@@ -253,10 +254,8 @@ export default function VoiceReportIssue() {
   const endCall = async () => {
     console.log('📞 [Voice Call] Ending call...');
     // Tell backend to save transcript before disconnecting
-    if ((voiceAgentApi as any).endCall) {
-      console.log('💾 [Voice Call] Sending end_call signal to backend');
-      (voiceAgentApi as any).endCall();
-    }
+    console.log('💾 [Voice Call] Sending end_call signal to backend');
+    voiceAgentApi.endCall();
     
     // Wait a moment for save to complete, then disconnect
     setTimeout(() => {
@@ -314,7 +313,7 @@ export default function VoiceReportIssue() {
         setUploadingPhoto(false);
       };
       reader.readAsDataURL(photoFile);
-    } catch (err) {
+    } catch {
       setError('Failed to upload photo');
       setUploadingPhoto(false);
     }

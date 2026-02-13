@@ -59,7 +59,7 @@ export default function ContractorWorkItems() {
       await workItemsApi.updateStatusToFixing(caseId);
       setSuccess('Work started! Status updated to "Fixing"');
       loadWorkItems(); // Refresh
-    } catch (err) {
+    } catch {
       setError('Failed to start work');
     }
   };
@@ -98,7 +98,7 @@ export default function ContractorWorkItems() {
         loadWorkItems(); // Refresh
       };
       reader.readAsDataURL(fixedPhoto);
-    } catch (err) {
+    } catch {
       setError('Failed to submit work');
     } finally {
       setUploading(false);

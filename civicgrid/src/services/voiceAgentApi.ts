@@ -19,14 +19,14 @@ export interface VoiceAgentEvents {
   onReady?: () => void;
   onRateLimited?: (data: RateLimitStatus) => void;
   onSessionStarted?: (data: { session_id: string }) => void;
-  onConversation?: (data: { data: any; transcript: string }) => void;
-  onThinking?: (data: { data: any; transcript: string }) => void;
-  onAgentSpeaking?: (data: { data: any }) => void;
-  onAgentStoppedSpeaking?: (data: { data: any }) => void;
+  onConversation?: (data: { data: unknown; transcript: string }) => void;
+  onThinking?: (data: { data: unknown; transcript: string }) => void;
+  onAgentSpeaking?: (data: { data: unknown }) => void;
+  onAgentStoppedSpeaking?: (data: { data: unknown }) => void;
   onAgentAudio?: (data: { audio: number[]; format: string }) => void;
-  onUserStartedSpeaking?: (data: { data: any }) => void;
-  onUserStoppedSpeaking?: (data: { data: any }) => void;
-  onError?: (data: { data: { message: string; type?: string; details?: any } }) => void;
+  onUserStartedSpeaking?: (data: { data: unknown }) => void;
+  onUserStoppedSpeaking?: (data: { data: unknown }) => void;
+  onError?: (data: { data: { message: string; type?: string; details?: unknown } }) => void;
 }
 
 class VoiceAgentService {
@@ -63,7 +63,7 @@ class VoiceAgentService {
 
   private async initAudioContext() {
     if (!this.audioContext) {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+      this.audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)({
         sampleRate: 16000
       });
       console.log('Audio context created, state:', this.audioContext.state);

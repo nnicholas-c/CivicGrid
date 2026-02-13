@@ -8,8 +8,8 @@
  * 4. Never auto-hide again on future scrolls
  */
 
-import { useEffect, useRef, useCallback } from 'react';
-import { motion, useInView, useScroll, useTransform, useReducedMotion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
+import { motion, useInView, useScroll } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useFinalTimeline } from '../hooks/useFinalTimeline';
 import { useUIStore } from '../store/ui';
@@ -28,7 +28,7 @@ export default function FinalReveal({
   showCTAs = true,
 }: FinalRevealProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasStartedTimerRef = useRef(false); // Prevent double timer in StrictMode
 
   // UI Store
@@ -37,8 +37,6 @@ export default function FinalReveal({
   const setPhoneOpacity = useUIStore((state) => state.setPhoneOpacity);
   const setCTAsOpacity = useUIStore((state) => state.setCTAsOpacity);
   const markFirstRevealDone = useUIStore((state) => state.markFirstRevealDone);
-
-  const prefersReducedMotion = useReducedMotion();
 
   // Detect when section is in view (first time only)
   const isInView = useInView(containerRef, {
@@ -51,10 +49,6 @@ export default function FinalReveal({
     target: containerRef,
     offset: ['start 90%', 'start 20%'], // Tune these offsets for your layout
   });
-
-  // Map scroll progress to opacity (only while !firstRevealDone)
-  // progress 0 → 1 maps to opacity 1 → 0
-  const scrollDrivenOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
 
   // Original timeline controls for title/CTA animations
   const { titleControls, ctaControls, start } = useFinalTimeline();

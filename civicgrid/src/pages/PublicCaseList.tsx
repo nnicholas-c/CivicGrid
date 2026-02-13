@@ -40,12 +40,6 @@ export default function PublicCaseList() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    if (status === 'resolved' || status === 'paid') return 'gradient-success';
-    if (status === 'in_progress') return 'gradient-warning';
-    return 'gradient-primary';
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

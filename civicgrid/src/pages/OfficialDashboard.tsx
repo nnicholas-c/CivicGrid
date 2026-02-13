@@ -6,13 +6,11 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Shield, TrendingUp, AlertCircle, Users, MapPin, Clock } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
 import apiService from '../services/api';
 import type { Case } from '../types';
 import { assetUrl } from '../lib/assetUrl';
 
 export default function OfficialDashboard() {
-  const { user } = useAuthStore();
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -61,7 +61,7 @@ export default function GovernmentDashboard() {
       await workItemsApi.updateGovApprovalStatus(caseId, 'gov_approved');
       setSuccess('Assignment approved successfully');
       loadData(); // Refresh data
-    } catch (err) {
+    } catch {
       setError('Failed to approve assignment');
     }
   };
@@ -72,7 +72,7 @@ export default function GovernmentDashboard() {
       await workItemsApi.updateGovApprovalStatus(caseId, 'gov_denied');
       setSuccess('Assignment denied');
       loadData(); // Refresh data
-    } catch (err) {
+    } catch {
       setError('Failed to deny assignment');
     }
   };
@@ -83,7 +83,7 @@ export default function GovernmentDashboard() {
       await workItemsApi.updateGovApprovalStatus(caseId, 'completed');
       setSuccess('Work completion verified');
       loadData(); // Refresh data
-    } catch (err) {
+    } catch {
       setError('Failed to verify completion');
     }
   };
@@ -100,7 +100,7 @@ export default function GovernmentDashboard() {
       setSuccess('Work item assigned to contractor');
       setContractorId('');
       loadData(); // Refresh data
-    } catch (err) {
+    } catch {
       setError('Failed to assign contractor');
     }
   };

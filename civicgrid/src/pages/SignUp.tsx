@@ -65,7 +65,7 @@ export default function SignUp() {
         default:
           navigate('/dashboard');
       }
-    } catch (err) {
+    } catch {
       setError('Sign up failed. Please try again.');
     } finally {
       setLoading(false);

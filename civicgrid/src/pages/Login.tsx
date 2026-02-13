@@ -45,7 +45,7 @@ export default function Login() {
         default:
           navigate('/dashboard');
       }
-    } catch (err) {
+    } catch {
       setError('Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
