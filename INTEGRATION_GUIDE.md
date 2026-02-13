@@ -7,7 +7,7 @@
 - Python 3.8+
 - API Keys:
   - **DEEPGRAM_API_KEY**: For voice agent (get from https://console.deepgram.com)
-  - **ANTHROPIC_API_KEY**: For Claude analyzer (get from https://console.anthropic.com)
+  - **XAI_API_KEY**: For Grok analyzer (get from https://console.x.ai)
 
 ### Setup Steps
 
@@ -21,8 +21,8 @@ chmod +x start-all-services.sh stop-all-services.sh
 # Voice Agent Backend
 echo "DEEPGRAM_API_KEY=your_key_here" >> ML-backend/voice-agent-backend/.env
 
-# Claude Analyzer
-echo "ANTHROPIC_API_KEY=your_key_here" >> ML-backend/Claude-Anaylzer/.env
+# Grok Analyzer
+echo "XAI_API_KEY=your_key_here" >> ML-backend/Claude-Anaylzer/.env
 ```
 
 3. **Start all services:**
@@ -50,7 +50,7 @@ echo "ANTHROPIC_API_KEY=your_key_here" >> ML-backend/Claude-Anaylzer/.env
    - WebSocket communication with frontend
    - Saves transcripts and uploads to cloud
 
-3. **Claude Analyzer (Python)**
+3. **Grok Analyzer (Python)**
    - Processes transcripts + images
    - Generates structured JSON
    - Posts to Firebase database
@@ -70,7 +70,7 @@ echo "ANTHROPIC_API_KEY=your_key_here" >> ML-backend/Claude-Anaylzer/.env
 5. Click the red phone button to end the call
 6. System will:
    - Save transcript
-   - Send to Claude for analysis
+   - Send to Grok for analysis
    - Create work item in database
    - Redirect to cases page
 
@@ -106,10 +106,10 @@ DEEPGRAM_API_KEY=your_key_here
 GOOGLE_API_KEY=your_key_here  # For Gemini
 ```
 
-**Claude Analyzer (.env):**
+**Grok Analyzer (.env):**
 ```env
-ANTHROPIC_API_KEY=your_key_here
-CLAUDE_MODEL=claude-3-5-sonnet-20241022
+XAI_API_KEY=your_key_here
+GROK_MODEL=grok-3-mini-fast
 ```
 
 ## 📊 API Endpoints
@@ -156,9 +156,9 @@ kill -9 $(lsof -t -i:5173)
 - Ensure DEEPGRAM_API_KEY is valid
 - Check console for WebSocket errors
 
-4. **Claude Analyzer not processing:**
-- Verify ANTHROPIC_API_KEY is set
-- Check Claude-Analyzer logs
+4. **Grok Analyzer not processing:**
+- Verify XAI_API_KEY is set
+- Check Grok Analyzer logs
 - Ensure system_prompt.txt exists
 
 ## 📝 Development Workflow

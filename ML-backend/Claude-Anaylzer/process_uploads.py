@@ -4,7 +4,7 @@ import json
 import base64
 import re
 import requests
-import anthropic
+from openai import OpenAI
 from datetime import datetime, timezone
 from pathlib import Path
 from dotenv import load_dotenv
@@ -13,22 +13,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class ClaudeAnalyzer:
+class GrokAnalyzer:
     def __init__(self, api_key=None, model=None, system_prompt_file="system_prompt.txt"):
         """
-        Initialize the Claude Analyzer
+        Initialize the Grok Analyzer
         
         Args:
-            api_key: Anthropic API key (defaults to ANTHROPIC_API_KEY env var)
-            model: Claude model to use (defaults to CLAUDE_MODEL env var or claude-3-5-sonnet-20241022)
+            api_key: xAI API key (defaults to XAI_API_KEY env var)
+            model: Grok model to use (defaults to GROK_MODEL env var or grok-3-mini-fast)
             system_prompt_file: Path to file containing the system prompt
         """
-        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
+        self.api_key = api_key or os.getenv("XAI_API_KEY")
         if not self.api_key:
-            raise ValueError("ANTHROPIC_API_KEY not found. Set it as an environment variable or pass it to the constructor.")
+            raise ValueError("XAI_API_KEY not found. Set it as an environment variable or pass it to the constructor.")
         
-        self.model = model or os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20241022")
-        self.client = anthropic.Anthropic(api_key=self.api_key)
+        self.model = model or os.getenv("GROK_MODEL", "grok-3-mini-fast")
+        self.client = OpenAI(api_key=self.api_key, base_url="https://api.x.ai/v1")
         self.system_prompt = self._load_system_prompt(system_prompt_file)
     
     def _extract_json_from_markdown(self, text):
@@ -130,9 +130,9 @@ class ClaudeAnalyzer:
             print(f"Network error fetching data from endpoint: {e}")
             raise
     
-    def process_with_claude(self, item):
+    def process_with_grok(self, item):
         """
-        Process a single item through Claude API
+        Process a single item through Grok API
         
         Args:
             item: Dictionary containing id, transcript, and optional picture
@@ -158,11 +158,10 @@ class ClaudeAnalyzer:
             if media_type:
                 print(f"  Detected image format: {media_type}")
                 content.append({
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": media_type,
-                        "data": picture_base64
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{media_type};base64,{picture_base64}",
+                        "detail": "high"
                     }
                 })
             else:
@@ -176,12 +175,15 @@ class ClaudeAnalyzer:
             })
         
         try:
-            # Call Claude API
-            message = self.client.messages.create(
+            # Call Grok API (OpenAI-compatible)
+            response = self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=4096,
-                system=self.system_prompt,
                 messages=[
+                    {
+                        "role": "system",
+                        "content": self.system_prompt
+                    },
                     {
                         "role": "user",
                         "content": content
@@ -190,7 +192,7 @@ class ClaudeAnalyzer:
             )
             
             # Extract response text
-            response_text = message.content[0].text
+            response_text = response.choices[0].message.content
             
             # Extract JSON from markdown code blocks if present
             json_text = self._extract_json_from_markdown(response_text)
@@ -206,7 +208,7 @@ class ClaudeAnalyzer:
             return {
                 "id": item_id,
                 "original_data": item,
-                "claude_response": response_json,
+                "grok_response": response_json,
                 "processed_at": datetime.now(timezone.utc).isoformat()
             }
             
@@ -284,13 +286,13 @@ class ClaudeAnalyzer:
         else:
             return obj
     
-    def send_update_notification(self, source_ref, claude_response, update_endpoint_url):
+    def send_update_notification(self, source_ref, grok_response, update_endpoint_url):
         """
         Send POST request to update endpoint after processing completes
         
         Args:
             source_ref: The ID from the original GET request (formatted with 'user_uploads/' prefix)
-            claude_response: The processed response from Claude
+            grok_response: The processed response from Grok
             update_endpoint_url: URL of the POST endpoint to notify
             
         Returns:
@@ -298,12 +300,12 @@ class ClaudeAnalyzer:
         """
         try:
             # Normalize values for API compatibility
-            cleaned_response = self._normalize_api_values(claude_response)
+            cleaned_response = self._normalize_api_values(grok_response)
             
-            # Build payload with sourceRef and all Claude response fields
+            # Build payload with sourceRef and all Grok response fields
             payload = {
                 "sourceRef": source_ref,
-                **cleaned_response  # Spread all Claude response fields including issue_summary
+                **cleaned_response  # Spread all Grok response fields including issue_summary
             }
             
             response = requests.post(update_endpoint_url, json=payload)
@@ -321,7 +323,7 @@ class ClaudeAnalyzer:
     
     def process_all(self, endpoint_url, output_dir="outputs", update_endpoint_url=None):
         """
-        Fetch all uploads and process them through Claude
+        Fetch all uploads and process them through Grok
         
         Args:
             endpoint_url: URL of the GET endpoint
@@ -329,7 +331,7 @@ class ClaudeAnalyzer:
             update_endpoint_url: Optional URL to POST update notifications
         """
         print("\n" + "="*70)
-        print("🤖 CLAUDE ANALYZER - Starting Processing")
+        print("🤖 GROK ANALYZER - Starting Processing")
         print("="*70)
         print(f"📡 Fetching uploads from endpoint: {endpoint_url}")
         items = self.fetch_uploads(endpoint_url)
@@ -355,19 +357,19 @@ class ClaudeAnalyzer:
             print(f"🔄 Processing [{idx}/{len(items)}] - Upload ID: {item_id}")
             print(f"{'='*70}")
             
-            result = self.process_with_claude(item)
+            result = self.process_with_grok(item)
             
             print(f"\n💾 Saving result to file...")
             self.save_result(result, output_dir)
             
             # Send update notification if endpoint is provided and no error occurred
             if update_endpoint_url and 'error' not in result:
-                claude_response = result.get('claude_response')
-                if item_id and claude_response:
+                grok_response = result.get('grok_response')
+                if item_id and grok_response:
                     print(f"📤 Sending processed data to Firebase...")
                     # Format sourceRef as required by the API (must start with 'user_uploads/')
                     source_ref = f"user_uploads/{item_id}"
-                    success = self.send_update_notification(source_ref, claude_response, update_endpoint_url)
+                    success = self.send_update_notification(source_ref, grok_response, update_endpoint_url)
                     if success:
                         print(f"✅ Upload {item_id} fully processed and sent to Firebase!")
                     else:
@@ -399,7 +401,7 @@ def main():
     
     print("\n" + "#"*70)
     print("#" + " "*68 + "#")
-    print("#" + "  CIVICGRID - CLAUDE ANALYZER".center(68) + "#")
+    print("#" + "  CIVICGRID - GROK ANALYZER".center(68) + "#")
     print("#" + "  AI-Powered Civic Issue Analysis".center(68) + "#")
     print("#" + " "*68 + "#")
     print("#"*70 + "\n")
@@ -411,14 +413,14 @@ def main():
     print(f"   📄 Prompt file: {SYSTEM_PROMPT_FILE}\n")
     
     # Initialize analyzer
-    print("🚀 Initializing Claude Analyzer...")
-    analyzer = ClaudeAnalyzer(system_prompt_file=SYSTEM_PROMPT_FILE)
+    print("🚀 Initializing Grok Analyzer...")
+    analyzer = GrokAnalyzer(system_prompt_file=SYSTEM_PROMPT_FILE)
     print("✅ Analyzer initialized\n")
     
     # Process all uploads
     analyzer.process_all(ENDPOINT_URL, OUTPUT_DIR, UPDATE_ENDPOINT_URL)
     
-    print("\n🎉 Claude Analyzer finished! Ready for next run.\n")
+    print("\n🎉 Grok Analyzer finished! Ready for next run.\n")
 
 
 if __name__ == "__main__":

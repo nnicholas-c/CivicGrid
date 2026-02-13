@@ -92,8 +92,8 @@ User Browser                Server                  Firebase
 - Check: Cloud Function URL is correct
 - Look for: "Transcript uploaded successfully" in logs
 
-### Issue: Claude not processing
-- Check: ANTHROPIC_API_KEY in ML-backend/Claude-Anaylzer/.env
+### Issue: Grok not processing
+- Check: XAI_API_KEY in ML-backend/Claude-Anaylzer/.env
 - Manually run: `python ML-backend/Claude-Anaylzer/process_uploads.py`
 - Check outputs folder for JSON results
 

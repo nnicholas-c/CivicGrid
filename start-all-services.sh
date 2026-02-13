@@ -53,24 +53,24 @@ VOICE_PID=$!
 echo "   Voice Agent Backend started (PID: $VOICE_PID)"
 
 echo "
-2) Starting Claude Analyzer (continuous mode)"
+2) Starting Grok Analyzer (continuous mode)"
 cd ../Claude-Anaylzer
 if [ -f ".env" ]; then
     echo "   .env file found"
 else
     echo "   Creating .env from .env.example"
     cp .env.example .env
-    echo "   Add ANTHROPIC_API_KEY to ML-backend/Claude-Anaylzer/.env"
+    echo "   Add XAI_API_KEY to ML-backend/Claude-Anaylzer/.env"
 fi
 
 (
   while true; do
-    python process_uploads.py >> ../../claude-analyzer.log 2>&1
+    python process_uploads.py >> ../../grok-analyzer.log 2>&1
     sleep 15
   done
 ) &
-CLAUDE_PID=$!
-echo "   Claude Analyzer started (PID: $CLAUDE_PID)"
+GROK_PID=$!
+echo "   Grok Analyzer started (PID: $GROK_PID)"
 
 cd ../..
 
@@ -89,7 +89,7 @@ echo "   Frontend started (PID: $FRONTEND_PID)"
 cd ..
 
 echo "$VOICE_PID" > .service-pids
-echo "$CLAUDE_PID" >> .service-pids
+echo "$GROK_PID" >> .service-pids
 echo "$FRONTEND_PID" >> .service-pids
 
 sleep 3
@@ -102,11 +102,11 @@ echo "  Voice Agent Backend: http://localhost:3000"
 echo
 echo "Logs:"
 echo "  tail -f voice-agent.log"
-echo "  tail -f claude-analyzer.log"
+echo "  tail -f grok-analyzer.log"
 echo "  tail -f frontend.log"
 echo
 echo "To stop all services: ./stop-all-services.sh"
 echo "Ensure API keys are added to the relevant .env files."
 
 echo "Press Ctrl+C to stop log tailing"
-tail -f voice-agent.log claude-analyzer.log frontend.log
+tail -f voice-agent.log grok-analyzer.log frontend.log

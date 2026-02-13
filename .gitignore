@@ -35,6 +35,7 @@ logs/
 *.pid
 voice-agent.log
 claude-analyzer.log
+grok-analyzer.log
 frontend.log
 
 # OS/editor clutter

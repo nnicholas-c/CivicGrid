@@ -1,13 +1,13 @@
-# Claude Analyzer
+# Grok Analyzer
 
-A Python application that fetches user uploads from an API endpoint, processes them through Claude AI (with vision support), and saves the JSON outputs.
+A Python application that fetches user uploads from an API endpoint, processes them through Grok AI (with vision support), and saves the JSON outputs.
 
 ## Features
 
 - ✅ Fetches data from GET endpoint
 - ✅ Processes both images (base64) and text transcripts
 - ✅ Custom system prompts via configuration file
-- ✅ Claude Vision API integration
+- ✅ Grok Vision API integration
 - ✅ Saves individual JSON output per ID
 - ✅ Error handling and logging
 
@@ -27,24 +27,24 @@ Create a `.env` file in the project root:
 cp .env.example .env
 ```
 
-Then edit `.env` and add your Anthropic API key and preferred model:
+Then edit `.env` and add your xAI API key and preferred model:
 
 ```
-ANTHROPIC_API_KEY=your_api_key_here
-CLAUDE_MODEL=claude-3-5-sonnet-20241022
+XAI_API_KEY=your_api_key_here
+GROK_MODEL=grok-3-mini-fast
 ```
 
 The application will automatically load environment variables from this file.
 
 **Available models:**
-- `claude-3-5-sonnet-20241022` (recommended, balanced performance)
-- `claude-3-5-haiku-20241022` (faster, cheaper)
-- `claude-3-opus-20240229` (most capable)
-- Or use model names like `claude-3-7-sonnet-latest` for newer versions
+- `grok-3-mini-fast` (recommended, fast and cost-effective)
+- `grok-3-mini` (balanced performance)
+- `grok-3` (most capable)
+- `grok-4` (latest and most powerful)
 
 ### 3. Customize System Prompt
 
-Edit `system_prompt.txt` to design your custom prompt. This prompt tells Claude how to analyze the image and transcript data.
+Edit `system_prompt.txt` to design your custom prompt. This prompt tells Grok how to analyze the image and transcript data.
 
 **Example system prompts:**
 
@@ -79,7 +79,7 @@ python process_uploads.py
 
 This will:
 1. Fetch all uploads from `https://getuserupload-xglsok67aq-uc.a.run.app/`
-2. Process each item through Claude with your system prompt
+2. Process each item through Grok with your system prompt
 3. Save results to `outputs/{id}.json`
 
 ### Output Structure
@@ -96,7 +96,7 @@ Each output file will contain:
     "createdAt": {...},
     "status": "raw"
   },
-  "claude_response": {
+  "grok_response": {
     // Your custom JSON response based on system prompt
   },
   "processed_at": "2024-10-26T04:06:00.123456"
@@ -121,12 +121,12 @@ Edit the `OUTPUT_DIR` variable in `process_uploads.py`:
 OUTPUT_DIR = "my_results"
 ```
 
-### Change Claude Model
+### Change Grok Model
 
-Edit the `CLAUDE_MODEL` variable in your `.env` file:
+Edit the `GROK_MODEL` variable in your `.env` file:
 
 ```
-CLAUDE_MODEL=claude-3-opus-20240229
+GROK_MODEL=grok-3
 ```
 
 No code changes needed! The model is loaded from the environment variable.
@@ -145,7 +145,7 @@ If your base64 images are not PNG, update the `media_type` in `process_uploads.p
 Claude-Anaylzer/
 ├── process_uploads.py    # Main application
 ├── requirements.txt      # Python dependencies
-├── system_prompt.txt     # Your custom Claude prompt (EDIT THIS!)
+├── system_prompt.txt     # Your custom Grok prompt (EDIT THIS!)
 ├── .env.example         # Environment variable template
 ├── README.md            # This file
 └── outputs/             # Output directory (created automatically)
@@ -158,7 +158,7 @@ Claude-Anaylzer/
 
 ### API Key Error
 ```
-ValueError: ANTHROPIC_API_KEY not found
+ValueError: XAI_API_KEY not found
 ```
 **Solution:** Set your API key as an environment variable or pass it to the constructor.
 
@@ -166,7 +166,7 @@ ValueError: ANTHROPIC_API_KEY not found
 ```
 Warning: Response for {id} is not valid JSON
 ```
-**Solution:** Your system prompt may not be instructing Claude to return valid JSON. Update your prompt to explicitly request JSON output.
+**Solution:** Your system prompt may not be instructing Grok to return valid JSON. Update your prompt to explicitly request JSON output.
 
 ### Rate Limiting
 If processing many items, you may hit API rate limits. Consider adding delays between requests:

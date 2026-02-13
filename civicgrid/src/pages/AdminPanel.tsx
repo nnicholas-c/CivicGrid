@@ -117,7 +117,7 @@ export default function AdminPanel() {
                 <div className="font-semibold mb-1">I understand this is permanent</div>
                 <div className="text-sm text-white/70">
                   I confirm that I want to delete all user uploads. This will remove all voice transcripts
-                  and images that have not yet been processed by the Claude Analyzer.
+                  and images that have not yet been processed by the Grok Analyzer.
                 </div>
               </label>
             </div>

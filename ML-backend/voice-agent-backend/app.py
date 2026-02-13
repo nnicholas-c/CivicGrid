@@ -127,14 +127,14 @@ class TranscriptManager:
 
 transcript_manager = TranscriptManager()
 
-# Function to trigger Claude Analyzer
-def trigger_claude_analyzer():
-    """Trigger the Claude-Analyzer to process the uploaded transcript"""
+# Function to trigger Grok Analyzer
+def trigger_grok_analyzer():
+    """Trigger the Grok Analyzer to process the uploaded transcript"""
     try:
         analyzer_path = Path(__file__).parent.parent / "Claude-Anaylzer" / "process_uploads.py"
         if analyzer_path.exists():
             print("\n" + "="*50)
-            print("🤖 TRIGGERING CLAUDE ANALYZER")
+            print("🤖 TRIGGERING GROK ANALYZER")
             print("="*50)
             print(f"📂 Script: {analyzer_path}")
             
@@ -146,7 +146,7 @@ def trigger_claude_analyzer():
                 stderr=subprocess.PIPE,
                 text=True
             )
-            print(f"✅ Claude-Analyzer started (PID: {result.pid})")
+            print(f"✅ Grok Analyzer started (PID: {result.pid})")
             print(f"⏳ Processing uploads... (this may take 10-30 seconds)")
             
             # Wait briefly and show initial output
@@ -163,10 +163,10 @@ def trigger_claude_analyzer():
             print("="*50 + "\n")
             return result
         else:
-            print(f"❌ Claude-Analyzer not found at {analyzer_path}")
+            print(f"❌ Grok Analyzer not found at {analyzer_path}")
             return None
     except Exception as e:
-        print(f"❌ Error triggering Claude-Analyzer: {e}")
+        print(f"❌ Error triggering Grok Analyzer: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -178,8 +178,8 @@ def signal_handler(sig, frame):
     transcript_file = transcript_manager.save_transcript()
     if transcript_file:
         print(f"✓ Transcript saved to {transcript_file}")
-        # Trigger Claude-Analyzer
-        trigger_claude_analyzer()
+        # Trigger Grok Analyzer
+        trigger_grok_analyzer()
     print("Shutting down gracefully...")
     sys.exit(0)
 
@@ -588,8 +588,8 @@ def save_and_process_transcript():
         transcript_file = transcript_manager.save_transcript()
         if transcript_file:
             print(f"✓ Transcript saved to {transcript_file}")
-            # Trigger Claude-Analyzer
-            trigger_claude_analyzer()
+            # Trigger Grok Analyzer
+            trigger_grok_analyzer()
             return True
     except Exception as e:
         print(f"Error saving transcript: {e}")

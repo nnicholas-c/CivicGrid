@@ -30,7 +30,7 @@ pip install -r requirements.txt
 ```
 3) Environment files
 - `ML-backend/voice-agent-backend/.env` – set `DEEPGRAM_API_KEY`.
-- `ML-backend/Claude-Anaylzer/.env` – set `ANTHROPIC_API_KEY` and optional `CLAUDE_MODEL`.
+- `ML-backend/Claude-Anaylzer/.env` – set `XAI_API_KEY` and optional `GROK_MODEL`.
 
 ## Run
 From repo root:
@@ -48,4 +48,4 @@ From repo root:
 - PyAudio build errors: install PortAudio dev packages (see Prerequisites).
 - Node syntax errors on Vite start: ensure Node 18+.
 - ALSA warnings on headless hosts can be ignored if audio hardware is unavailable.
-- If analyzer cannot reach Claude: confirm `ANTHROPIC_API_KEY` and outbound network access.
+- If analyzer cannot reach Grok: confirm `XAI_API_KEY` and outbound network access.

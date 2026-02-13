@@ -56,31 +56,31 @@ export default function VoiceReportIssue() {
 
   const checkProcessingStatus = async (uploadId: string) => {
     try {
-      console.log('🔍 [Claude Status] Checking processing status for:', uploadId);
+      console.log('🔍 [Grok Status] Checking processing status for:', uploadId);
       const result = await workItemsApi.getUserUpload(uploadId);
-      console.log('📊 [Claude Status] Full response:', JSON.stringify(result, null, 2));
+      console.log('📊 [Grok Status] Full response:', JSON.stringify(result, null, 2));
       
       // API returns { count, documents: [{id, status, ...}] }
       const upload = result.documents?.[0];
       
       // If no upload found or count is 0, it was processed and removed!
       if (!upload || result.count === 0) {
-        console.log('✅ [Claude Status] Upload not found - It was processed and removed from queue!');
+        console.log('✅ [Grok Status] Upload not found - It was processed and removed from queue!');
         setProcessingStatus('completed');
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
-          console.log('⏹️ [Claude Status] Stopped polling');
+          console.log('⏹️ [Grok Status] Stopped polling');
         }
         setTimeout(() => {
-          console.log('🔀 [Claude Status] Redirecting to dashboard...');
+          console.log('🔀 [Grok Status] Redirecting to dashboard...');
           navigate('/government/dashboard');
         }, 2000);
         return;
       }
       
-      console.log('📊 [Claude Status] Upload status:', upload.status);
-      console.log('📊 [Claude Status] Upload ID:', upload.id);
-      console.log('📊 [Claude Status] Has workItemId:', !!upload.workItemId);
+      console.log('📊 [Grok Status] Upload status:', upload.status);
+      console.log('📊 [Grok Status] Upload ID:', upload.id);
+      console.log('📊 [Grok Status] Has workItemId:', !!upload.workItemId);
       
       // Check multiple conditions for processed status:
       // 1. Has a workItemId (means it was processed and work item created)
@@ -91,48 +91,48 @@ export default function VoiceReportIssue() {
                          upload.processed === true;
       
       if (isProcessed) {
-        console.log('✅ [Claude Status] Processing COMPLETED!');
+        console.log('✅ [Grok Status] Processing COMPLETED!');
         setProcessingStatus('completed');
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
-          console.log('⏹️ [Claude Status] Stopped polling');
+          console.log('⏹️ [Grok Status] Stopped polling');
         }
         setTimeout(() => {
-          console.log('🔀 [Claude Status] Redirecting to dashboard...');
+          console.log('🔀 [Grok Status] Redirecting to dashboard...');
           navigate('/government/dashboard');
         }, 2000);
       } else {
-        console.log('⏳ [Claude Status] Still processing... (status:', upload.status, ')');
+        console.log('⏳ [Grok Status] Still processing... (status:', upload.status, ')');
       }
     } catch (err) {
-      console.error('❌ [Claude Status] Error checking processing status:', err);
+      console.error('❌ [Grok Status] Error checking processing status:', err);
       // Don't set error immediately - keep polling
     }
   };
 
   const startPollingStatus = (uploadId: string) => {
-    console.log('🚀 [Claude Status] Starting to poll for upload ID:', uploadId);
+    console.log('🚀 [Grok Status] Starting to poll for upload ID:', uploadId);
     setProcessingStatus('processing');
     
     // Check immediately
-    console.log('🔄 [Claude Status] Initial check...');
+    console.log('🔄 [Grok Status] Initial check...');
     checkProcessingStatus(uploadId);
     
     // Then poll every 3 seconds
-    console.log('⏰ [Claude Status] Setting up polling interval (every 3 seconds)');
+    console.log('⏰ [Grok Status] Setting up polling interval (every 3 seconds)');
     pollingIntervalRef.current = setInterval(() => {
-      console.log('🔄 [Claude Status] Polling...');
+      console.log('🔄 [Grok Status] Polling...');
       checkProcessingStatus(uploadId);
     }, 3000);
     
-    // Auto-redirect after 45 seconds (Claude usually takes 10-30 seconds)
+    // Auto-redirect after 45 seconds (Grok usually takes 10-30 seconds)
     setTimeout(() => {
       if (pollingIntervalRef.current) {
-        console.log('⏰ [Claude Status] 45 seconds elapsed - assuming processing complete');
+        console.log('⏰ [Grok Status] 45 seconds elapsed - assuming processing complete');
         clearInterval(pollingIntervalRef.current);
         setProcessingStatus('completed');
         setTimeout(() => {
-          console.log('🔀 [Claude Status] Auto-redirecting to dashboard...');
+          console.log('🔀 [Grok Status] Auto-redirecting to dashboard...');
           navigate('/government/dashboard');
         }, 2000);
       }
@@ -141,10 +141,10 @@ export default function VoiceReportIssue() {
     // Stop polling after 2 minutes (safety)
     setTimeout(() => {
       if (pollingIntervalRef.current) {
-        console.warn('⚠️ [Claude Status] Timeout reached (2 minutes). Stopping polling.');
+        console.warn('⚠️ [Grok Status] Timeout reached (2 minutes). Stopping polling.');
         clearInterval(pollingIntervalRef.current);
         if (processingStatus === 'processing') {
-          console.warn('⚠️ [Claude Status] Processing took too long - setting error state');
+          console.warn('⚠️ [Grok Status] Processing took too long - setting error state');
           setProcessingStatus('error');
         }
       }
@@ -213,7 +213,7 @@ export default function VoiceReportIssue() {
       // Start polling for processing status
       if (sessionId) {
         console.log('🎯 [Voice Call] Session ID:', sessionId);
-        console.log('🤖 [Claude Status] Will now check if Claude Analyzer has processed this...');
+        console.log('🤖 [Grok Status] Will now check if Claude Analyzer has processed this...');
         startPollingStatus(sessionId);
       } else {
         console.warn('⚠️ [Voice Call] No session ID available - cannot poll for Claude processing!');
