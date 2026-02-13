@@ -241,7 +241,7 @@ class RateLimiter:
             }
 
 
-DAILY_CALL_LIMIT = int(os.environ.get("DAILY_CALL_LIMIT", "15"))
+DAILY_CALL_LIMIT = int(os.environ.get("DAILY_CALL_LIMIT", "5"))
 rate_limiter = RateLimiter(daily_limit=DAILY_CALL_LIMIT)
 print(f"📞 Rate limiter: {DAILY_CALL_LIMIT} calls/day")
 
