@@ -202,6 +202,10 @@ dg_connection = None  # Will be created per connection
 def index():
     return render_template('index.html')
 
+@app.route('/health')
+def health():
+    return jsonify({"status": "ok"}), 200
+
 @app.route('/transcript')
 def get_transcript():
     """Return the current transcript as JSON"""

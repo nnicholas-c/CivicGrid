@@ -9,8 +9,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Expose port
-EXPOSE 3000
+# Railway injects $PORT dynamically
+ENV PORT=3000
+EXPOSE ${PORT}
 
 # Start with gunicorn + eventlet for WebSocket support
-CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "--bind", "0.0.0.0:3000", "app:app"]
+# Use shell form so $PORT is expanded at runtime
+CMD gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT app:app
