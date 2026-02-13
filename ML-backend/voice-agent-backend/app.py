@@ -17,6 +17,7 @@ import json
 import signal
 import sys
 import subprocess
+import threading
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
@@ -46,7 +47,9 @@ CORS(app, resources={
 })
 socketio = SocketIO(app, 
                     cors_allowed_origins=ALLOWED_ORIGINS, 
-                    path='/socket.io')
+                    path='/socket.io',
+                    ping_timeout=10,
+                    ping_interval=5)
 
 # Transcript management
 class TranscriptManager:
@@ -187,16 +190,20 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)   # Ctrl+C
 signal.signal(signal.SIGTERM, signal_handler)  # Termination signal
 
-# Initialize Deepgram client with microphone/speaker support
+# Initialize Deepgram client (no local audio — we relay via WebSocket)
 config = DeepgramClientOptions(
     options={
         "keepalive": "true",
-        "microphone_record": "true",
-        "speaker_playback": "true",
     }
 )
 deepgram = DeepgramClient(os.getenv("DEEPGRAM_API_KEY", ""), config)
 dg_connection = None  # Will be created per connection
+
+# Pre-load agent prompt at startup (avoid disk read on every connection)
+_prompt_path = Path(__file__).parent / 'agent_prompt.txt'
+with open(_prompt_path, 'r') as _f:
+    AGENT_PROMPT = _f.read()
+print(f"✅ Agent prompt loaded ({len(AGENT_PROMPT)} chars)")
 
 @app.route('/')
 def index():
@@ -256,27 +263,19 @@ def handle_connect():
     options.agent.think.provider.type = "google"
     options.agent.think.provider.model = "gemini-2.5-flash"
     
-    # Load system prompt from file
-    prompt_path = Path(__file__).parent / 'agent_prompt.txt'
-    with open(prompt_path, 'r') as f:
-        options.agent.think.prompt = f.read()
+    # Use pre-loaded prompt (cached at startup)
+    options.agent.think.prompt = AGENT_PROMPT
 
-    # Deepgram provider configuration
-    options.agent.listen.provider.keyterms = ["hello", "goodbye"]
+    # Deepgram STT configuration
     options.agent.listen.provider.model = "nova-3"
     options.agent.listen.provider.type = "deepgram"
+    options.agent.listen.provider.endpointing = 300
+    options.agent.listen.provider.interim_results = True
+    options.agent.listen.provider.keyterms = ["hello", "goodbye"]
+    
+    # Deepgram TTS configuration
     options.agent.speak.provider.type = "deepgram"
     options.agent.speak.provider.model = "aura-2-odysseus-en"
-    
-    # Enable barge-in (user can interrupt agent)
-    options.agent.listen.model = "nova-3"
-    
-    # Configure turn detection for interruption
-    # Set endpointing to detect when user starts speaking
-    options.agent.listen.provider.endpointing = 300  # 300ms of speech to detect user turn
-    
-    # Enable interim results for faster barge-in detection
-    options.agent.listen.provider.interim_results = True
 
     # Sets Agent greeting
     options.agent.greeting = "Hey there! This is the AI service agent. What problem or issue can I help report for you today?"
@@ -284,13 +283,13 @@ def handle_connect():
     # Event handlers (self = Deepgram WebSocket client)
     def on_open(self, *args, **kwargs):
         open_event = kwargs.get('open') or (args[0] if args else None)
-        print("Open event received:", open_event.__dict__ if open_event else 'None')
+        print("Deepgram socket opened")
         if open_event:
             socketio.emit('open', {'data': open_event.__dict__})
 
     def on_welcome(self, *args, **kwargs):
         welcome = kwargs.get('welcome') or (args[0] if args else None)
-        print("Welcome event received:", welcome.__dict__ if welcome else 'None')
+        print("Deepgram welcome received — agent ready")
         if welcome:
             socketio.emit('welcome', {'data': welcome.__dict__})
             # Signal to frontend that Deepgram is ready for audio
@@ -301,98 +300,54 @@ def handle_connect():
         history = kwargs.get('history') or (args[0] if args else None)
         if not history:
             return
-            
-        print(f"\n=== History Event ===")
-        print(f"Type: {type(history)}")
-        print(f"Has __dict__: {hasattr(history, '__dict__')}")
-        if hasattr(history, '__dict__'):
-            print(f"Dict: {history.__dict__}")
-            print(f"Keys: {list(history.__dict__.keys())}")
-        print(f"Dir (non-private): {[attr for attr in dir(history) if not attr.startswith('_')]}")
-        print("===================\n")
         
-        # Try to extract audio from history - check multiple possible locations
         try:
             audio_data = None
-            
-            # Check various possible audio locations
             if hasattr(history, 'audio') and history.audio:
-                print(f"✓ Audio found in history.audio: {len(history.audio)} bytes")
                 audio_data = list(history.audio) if isinstance(history.audio, bytes) else history.audio
             elif hasattr(history, 'data') and hasattr(history.data, 'audio') and history.data.audio:
-                print(f"✓ Audio found in history.data.audio: {len(history.data.audio)} bytes")
                 audio_data = list(history.data.audio) if isinstance(history.data.audio, bytes) else history.data.audio
             elif hasattr(history, 'content') and isinstance(history.content, bytes):
-                print(f"✓ Audio found in history.content: {len(history.content)} bytes")
                 audio_data = list(history.content)
-            else:
-                print(f"✗ No audio in History event")
             
             if audio_data:
-                print(f"🔊 Sending {len(audio_data)} audio samples to client")
-                socketio.emit('agent_audio', {
-                    'audio': audio_data,
-                    'format': 'pcm16'
-                })
+                socketio.emit('agent_audio', {'audio': audio_data, 'format': 'pcm16'})
         except Exception as e:
-            print(f"✗ Error extracting audio from history: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"Error extracting audio from history: {e}")
     
     def on_message(self, *args, **kwargs):
+        """Handle generic messages including History with audio"""
         message = kwargs.get('message') or (args[0] if args else None)
         if not message:
             return
-        """Handle generic messages including History with audio"""
-        msg_type = getattr(message, 'type', 'unknown')
-        print(f"\n=== Message Event ===")
-        print(f"Type: {msg_type}")
-        print(f"Full message: {message}")
-        print(f"Has __dict__: {hasattr(message, '__dict__')}")
-        if hasattr(message, '__dict__'):
-            print(f"Attributes: {message.__dict__.keys()}")
-        print(f"Dir: {[attr for attr in dir(message) if not attr.startswith('_')]}")
-        print("===================\n")
         
-        # Try to extract audio from message
         try:
             if hasattr(message, 'audio') and message.audio:
-                print(f"✓ Audio data found in message: {len(message.audio)} bytes")
-                # Send audio to client
                 socketio.emit('agent_audio', {
-                    'audio': list(message.audio) if isinstance(message.audio, bytes) else message.audio,
+                    'audio': list(message.audio) if isinstance(message.audio, (bytes, bytearray)) else message.audio,
                     'format': 'pcm16'
                 })
             elif hasattr(message, 'data') and isinstance(message.data, dict) and message.data.get('audio'):
-                print(f"✓ Audio data found in message.data: {len(message.data['audio'])} bytes")
                 socketio.emit('agent_audio', {
                     'audio': message.data['audio'],
                     'format': 'pcm16'
                 })
-            else:
-                print(f"✗ No audio found in message")
         except Exception as e:
-            print(f"✗ Error extracting audio: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"Error handling message: {e}")
 
     def on_conversation_text(self, *args, **kwargs):
         conversation_text = kwargs.get('conversation_text') or (args[0] if args else None)
         if not conversation_text:
             return
-        print("Conversation event received:", conversation_text.__dict__)
         
-        # Extract message and role
         message = conversation_text.text if hasattr(conversation_text, 'text') else str(conversation_text)
         role = conversation_text.role if hasattr(conversation_text, 'role') else 'unknown'
         
-        # Add to transcript
         if role == 'user':
             transcript_manager.add_user_message(message)
         elif role == 'agent':
             transcript_manager.add_agent_message(message)
         
-        # Emit to client with transcript update
         socketio.emit('conversation', {
             'data': conversation_text.__dict__,
             'transcript': transcript_manager.get_transcript_text()
@@ -402,15 +357,10 @@ def handle_connect():
         agent_thinking = kwargs.get('agent_thinking') or (args[0] if args else None)
         if not agent_thinking:
             return
-        print("Thinking event received:", agent_thinking.__dict__)
         
-        # Extract thinking text
         thinking_text = agent_thinking.text if hasattr(agent_thinking, 'text') else str(agent_thinking)
-        
-        # Add to transcript
         transcript_manager.add_thinking(thinking_text)
         
-        # Emit to client with transcript update
         socketio.emit('thinking', {
             'data': agent_thinking.__dict__,
             'transcript': transcript_manager.get_transcript_text()
@@ -420,7 +370,6 @@ def handle_connect():
         function_call_request = kwargs.get('function_call_request') or (args[0] if args else None)
         if not function_call_request:
             return
-        print("Function call event received:", function_call_request.__dict__)
         response = FunctionCallResponse(
             function_call_id=function_call_request.function_call_id,
             output="Function response here"
@@ -430,110 +379,70 @@ def handle_connect():
 
     def on_agent_started_speaking(self, *args, **kwargs):
         agent_started_speaking = kwargs.get('agent_started_speaking') or (args[0] if args else None)
-        if not agent_started_speaking:
-            return
-        print("Agent speaking event received:", agent_started_speaking.__dict__)
-        socketio.emit('agent_speaking', {'data': agent_started_speaking.__dict__})
+        if agent_started_speaking:
+            socketio.emit('agent_speaking', {'data': agent_started_speaking.__dict__})
 
     def on_error(self, *args, **kwargs):
         error = kwargs.get('error') or (args[0] if args else None)
         if not error:
             return
-        print("⚠️  Error event received:", error.__dict__)
-        error_data = {
+        print(f"⚠️ Deepgram error: {error}")
+        socketio.emit('error', {'data': {
             'message': str(error),
             'type': error.__class__.__name__,
             'details': error.__dict__
-        }
-        print("Sending error to client:", error_data)
-        socketio.emit('error', {'data': error_data})
-        
-        # Don't crash on audio errors - continue conversation
-        if 'audio' in str(error).lower() or 'alsa' in str(error).lower():
-            print("ℹ️  Audio error detected but continuing conversation...")
+        }})
 
     def on_agent_stopped_speaking(self, *args, **kwargs):
         agent_stopped_speaking = kwargs.get('agent_stopped_speaking') or (args[0] if args else None)
-        if not agent_stopped_speaking:
-            return
-        print("Agent stopped speaking event received:", agent_stopped_speaking.__dict__)
-        socketio.emit('agent_stopped_speaking', {'data': agent_stopped_speaking.__dict__})
+        if agent_stopped_speaking:
+            socketio.emit('agent_stopped_speaking', {'data': agent_stopped_speaking.__dict__})
 
     def on_audio_data(self, *args, **kwargs):
         """Handle AudioData events from agent speech"""
         audio_data_event = kwargs.get('audio_data') or kwargs.get('audio_data_event') or (args[0] if args else None)
         if not audio_data_event:
             return
-            
-        print(f"\n🔊 AudioData event received!")
-        print(f"Type: {type(audio_data_event)}")
-        if hasattr(audio_data_event, '__dict__'):
-            print(f"Dict: {audio_data_event.__dict__}")
-            print(f"Keys: {list(audio_data_event.__dict__.keys())}")
         
         try:
-            # Extract audio from AudioData event
             audio_bytes = None
             if hasattr(audio_data_event, 'audio') and audio_data_event.audio:
                 audio_bytes = audio_data_event.audio
-                print(f"✓ Got audio from .audio: {len(audio_bytes)} bytes")
             elif hasattr(audio_data_event, 'data') and audio_data_event.data:
                 audio_bytes = audio_data_event.data
-                print(f"✓ Got audio from .data: {len(audio_bytes)} bytes")
             
             if audio_bytes:
-                # Convert to list for JSON serialization
                 audio_list = list(audio_bytes) if isinstance(audio_bytes, (bytes, bytearray)) else audio_bytes
-                print(f"🔊 Sending {len(audio_list)} audio samples to client")
-                socketio.emit('agent_audio', {
-                    'audio': audio_list,
-                    'format': 'pcm16'
-                })
-            else:
-                print("✗ No audio data found in AudioData event")
+                socketio.emit('agent_audio', {'audio': audio_list, 'format': 'pcm16'})
         except Exception as e:
-            print(f"✗ Error handling AudioData: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"Error handling AudioData: {e}")
     
     def on_audio(self, *args, **kwargs):
         """Handle generic audio events (fallback)"""
         audio = kwargs.get('audio') or (args[0] if args else None)
         if not audio:
             return
-        print(f"Generic Audio event received, type: {type(audio)}, size: {len(audio) if hasattr(audio, '__len__') else 'unknown'}")
-        if audio:
-            # Check if it's raw bytes/array or an object with audio property
-            audio_data = None
-            if isinstance(audio, (bytes, bytearray)):
-                audio_data = list(audio)
-            elif hasattr(audio, 'audio'):
-                audio_data = list(audio.audio) if isinstance(audio.audio, (bytes, bytearray)) else audio.audio
-            elif isinstance(audio, list):
-                audio_data = audio
-            
-            if audio_data:
-                print(f"Sending {len(audio_data)} audio samples to client")
-                socketio.emit('agent_audio', {
-                    'audio': audio_data,
-                    'format': 'pcm16'
-                })
-            else:
-                print("Could not extract audio data from audio event")
+        
+        audio_data = None
+        if isinstance(audio, (bytes, bytearray)):
+            audio_data = list(audio)
+        elif hasattr(audio, 'audio'):
+            audio_data = list(audio.audio) if isinstance(audio.audio, (bytes, bytearray)) else audio.audio
+        elif isinstance(audio, list):
+            audio_data = audio
+        
+        if audio_data:
+            socketio.emit('agent_audio', {'audio': audio_data, 'format': 'pcm16'})
 
     def on_user_started_speaking(self, *args, **kwargs):
         user_started_speaking = kwargs.get('user_started_speaking') or (args[0] if args else None)
-        if not user_started_speaking:
-            return
-        print("🎤 User started speaking event received:", user_started_speaking.__dict__)
-        socketio.emit('user_started_speaking', {'data': user_started_speaking.__dict__})
+        if user_started_speaking:
+            socketio.emit('user_started_speaking', {'data': user_started_speaking.__dict__})
 
     def on_user_stopped_speaking(self, *args, **kwargs):
         user_stopped_speaking = kwargs.get('user_stopped_speaking') or (args[0] if args else None)
-        if not user_stopped_speaking:
-            return
-        print("🎤 User stopped speaking event received:", user_stopped_speaking.__dict__)
-        socketio.emit('user_stopped_speaking', {'data': user_stopped_speaking.__dict__})
+        if user_stopped_speaking:
+            socketio.emit('user_stopped_speaking', {'data': user_stopped_speaking.__dict__})
 
     # Register event handlers
     dg_connection.on(AgentWebSocketEvents.Open, on_open)
@@ -569,12 +478,21 @@ def handle_connect():
     dg_connection.on("message", on_message)
     dg_connection.on("audio", on_audio)
 
-    print("Starting Deepgram connection...")
-    if not dg_connection.start(options):
-        print("Failed to start Deepgram connection")
-        socketio.emit('error', {'data': {'message': 'Failed to start connection'}})
-        return
-    print("Deepgram connection started successfully")
+    print("Starting Deepgram connection in background...")
+    
+    def start_deepgram():
+        """Start Deepgram in a background thread so Socket.IO handler returns fast"""
+        try:
+            if not dg_connection.start(options):
+                print("Failed to start Deepgram connection")
+                socketio.emit('error', {'data': {'message': 'Failed to start connection'}})
+                return
+            print("✅ Deepgram connection started successfully")
+        except Exception as e:
+            print(f"❌ Deepgram start error: {e}")
+            socketio.emit('error', {'data': {'message': f'Deepgram error: {str(e)}'}})
+    
+    threading.Thread(target=start_deepgram, daemon=True).start()
 
 audio_chunk_counter = 0
 first_audio_logged = False

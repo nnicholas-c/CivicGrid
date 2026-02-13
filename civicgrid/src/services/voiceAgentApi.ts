@@ -69,7 +69,9 @@ class VoiceAgentService {
       path: '/socket.io',
       forceNew: true,
       transports: ['websocket'],
-      timeout: 20000
+      timeout: 10000,
+      reconnectionAttempts: 2,
+      reconnectionDelay: 1000
     });
 
     this.setupSocketListeners();
